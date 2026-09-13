@@ -38,4 +38,6 @@ JSON更新 → 公開URLを再取得 → 2つのサイトで告知を再取得 �
 - [表示部品](../templates/announcement-card.tsx) を components/announcement-card.tsx へ配置
 - [取得API](../templates/announcement-route.ts) を app/api/announcements/route.ts へ配置
 
-外観は利用先のCSSへ合わせます。1分は更新確認間隔であり、通信状態や配信元の制限で反映が遅れる場合があります。参加者が増えたら、各サイトからGitHub APIへ個別取得する方式を共通キャッシュ配信へ移行します。
+外観は利用先のCSSへ合わせます。1分は更新確認間隔であり、通信状態や配信元の制限で反映が遅れる場合があります。参加者が増えたら、各サイトからGitHubの公開ファイルを個別取得する方式を共通キャッシュ配信へ移行します。
+
+サイト内の取得は同一オリジンの認証Cookieを伴う通常のfetchを使います（credentials: same-origin）。省略すると本人限定Sitesでは認証が失われます。GitHubへのサーバー側取得にCookieは転送しません。
