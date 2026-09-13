@@ -29,3 +29,13 @@ PCでは左側ナビゲーションの下部に告知カードを置きます。
 JSON更新 → 公開URLを再取得 → 2つのサイトで告知を再取得 → サイトを再生成せず内容が変わったことを確認、の順で検証します。キャッシュの反映待ちを即時更新と呼ばないでください。初回表示時、以後1分ごと、ウィンドウへフォーカスが戻ったときに再取得します。
 
 実在する告知・SNS投稿を使うときは両方の公開URLを確認します。検証用はisDemo=trueとし、開催決定済みのイベントに見える表現を避けます。個人データ、内部チャット、秘密情報を配信JSONへ入れません。
+
+## サイト経由の取得と再利用部品
+
+ブラウザからGitHubへ直接アクセスできない環境を考慮し、同じサイトの `/api/announcements` を経由します。サーバーは固定した公開ファイルだけを取得し、任意URLの中継には使いません。個人情報や認証情報をGitHubへ送りません。
+
+- [検証・選択処理](../templates/announcements.ts) を lib/announcements.ts へ配置
+- [表示部品](../templates/announcement-card.tsx) を components/announcement-card.tsx へ配置
+- [取得API](../templates/announcement-route.ts) を app/api/announcements/route.ts へ配置
+
+外観は利用先のCSSへ合わせます。1分は更新確認間隔であり、通信状態や配信元の制限で反映が遅れる場合があります。参加者が増えたら、各サイトからGitHub APIへ個別取得する方式を共通キャッシュ配信へ移行します。
