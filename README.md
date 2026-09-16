@@ -31,6 +31,7 @@
 | [共通告知](docs/announcements.md) | 表示・データ・更新方法 |
 | [制作手順](docs/production-flow.md) | 告知文からLP・画像まで |
 | [検証チェックリスト](docs/verification.md) | 運営の通し確認と記録 |
+| [ワークショップ進行案](docs/workshop-runbook.md) | 2時間の進行・縮退順・記録表 |
 
 ## 仕様の更新
 
