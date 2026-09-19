@@ -1,0 +1,20 @@
+{
+  "name": "terakoya-ai",
+  "interface": {
+    "displayName": "寺子屋AI"
+  },
+  "plugins": [
+    {
+      "name": "terakoya-ai-creative",
+      "source": {
+        "source": "local",
+        "path": "./plugins/terakoya-ai-creative"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Creativity"
+    }
+  ]
+}
