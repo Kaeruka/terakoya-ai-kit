@@ -1,0 +1,6 @@
+次のURLの制作プロンプトを最後まで読み、私専用の「セミナーまるっと用意くん」をWeb版Workで新しく作ってください。
+https://raw.githubusercontent.com/kaerukadate1/terakoya-ai-kit/main/releases/kokuchi-v3/terakoya-kokuchi-v3.1-work-pack.txt
+説明やコードの提示だけで終わらせず、Sitesで実際に作成・保存・確認まで進め、私の操作が必要なところだけ教えてください。既存のサイトは更新・上書きせず別サイトとして本人限定で保存し、開けるURLを返してください。確認できない部分は未検証と明記してください。ファイルを取得できない場合はその旨を伝え、推測で仕様を補わないでください。
+
+---
+運営メモ：配布時は検証済みのコミットまたはタグ固定URLに置き換える（README「仕様の更新」参照）。ファイル添付方式にする場合は terakoya-kokuchi-v3.1-work-pack.txt を直接添付し、上のURL行を「添付の制作プロンプト」に読み替える。
