@@ -45,7 +45,7 @@ STEP6  画像を作る ──→ チラシ・SNSに使う画像
 - 使うもの：`prompts/03-start-seminar.txt`
 - 終わった目安：マイツールの一覧に「セミナーまるっと用意くん」のカードがあり、「開く」で起動できる。
 
-単ファイル配布版として [terakoya-kokuchi-v3.1-work-pack.txt](releases/kokuchi-v3/terakoya-kokuchi-v3.1-work-pack.txt)（識別子 `TERAKOYA-V3-WORKSHOP-03`）もあります。`releases/kokuchi-v3/` の V3 パックの改訂版で、GitHub参照なしでファイル添付だけで制作でき、受渡しは `?prompt=` リンク＋長文時の依頼.txt添付、名前付き「告知一式」保存セット、ヒアリングシート同梱など `docs/` 側の現行仕様と一部異なります。配布にはどちらの版を使うか運営で確認してください。
+単ファイル配布版として [terakoya-kokuchi-v3.1-work-pack.txt](releases/kokuchi-v3/terakoya-kokuchi-v3.1-work-pack.txt)（識別子 `TERAKOYA-V3-WORKSHOP-03`、現在 v3.2 作業中）もあります。`releases/kokuchi-v3/` の V3 パックの改訂版で、受渡しは `?prompt=` リンク、GitHub参照による制作を主経路とし（添付は代替）、結果は Work からの直接返却・自動保存でサイドバーに蓄積する設計へ移行中です。ヒアリングシート同梱、名前付き「告知一式」保存セット、材料欄の「ChatGPTに相談する」ボタンなど `docs/` 側の現行仕様と一部異なります。相談文テンプレート（`prompts/06-consult-material.txt`）と制作ルール（`prompts/terakoya-creative-rules.txt`）はツールが実行時に GitHub から読み込む設計です。配布にはどちらの版を使うか運営で確認してください。
 
 ### STEP 4　告知文を作る
 
