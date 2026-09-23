@@ -45,7 +45,7 @@ STEP6  画像を作る ──→ チラシ・SNSに使う画像
 - 使うもの：`prompts/03-start-seminar.txt`
 - 終わった目安：マイツールの一覧に「セミナーまるっと用意くん」のカードがあり、「開く」で起動できる。
 
-単ファイル配布版として [06-seminar-full-v3.1.txt](prompts/06-seminar-full-v3.1.txt)（識別子 `TERAKOYA-V3-WORKSHOP-03`）もあります。GitHub参照なしでファイル添付だけで制作できる新版で、受渡しは `?prompt=` リンク＋長文時の依頼.txt添付、名前付き「告知一式」保存セット、ヒアリングシート同梱など `docs/` 側の現行仕様と一部異なります。配布にはどちらの版を使うか運営で確認してください。
+単ファイル配布版として [terakoya-kokuchi-v3.1-work-pack.txt](releases/kokuchi-v3/terakoya-kokuchi-v3.1-work-pack.txt)（識別子 `TERAKOYA-V3-WORKSHOP-03`）もあります。`releases/kokuchi-v3/` の V3 パックの改訂版で、GitHub参照なしでファイル添付だけで制作でき、受渡しは `?prompt=` リンク＋長文時の依頼.txt添付、名前付き「告知一式」保存セット、ヒアリングシート同梱など `docs/` 側の現行仕様と一部異なります。配布にはどちらの版を使うか運営で確認してください。
 
 ### STEP 4　告知文を作る
 
