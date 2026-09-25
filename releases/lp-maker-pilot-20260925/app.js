@@ -399,7 +399,7 @@
 
   document.querySelectorAll(".step").forEach((button) => button.addEventListener("click", () => go(button.dataset.step)));
   document.querySelectorAll(".next-step").forEach((button) => button.addEventListener("click", () => go(button.dataset.next)));
-  $("load-sample").addEventListener("click", () => { if (Object.values(project.fields).some((v) => v.trim()) && !confirm("今の入力をサンプルに置き換えますか？ .jsonで保存しておくと戻せます。")) return; sample(); });
+  $("load-sample").addEventListener("click", () => { if (Object.values(project.fields).some((v) => v.trim()) && !confirm("今の入力をサンプルに置き換えますか？ 置き換える前に履歴にも残します。")) return; checkpointHistory(); sample(); });
   $("consult").addEventListener("click", () => {
     $("consult-panel").hidden = false;
     openWithPrompt(Core.buildConsultPrompt(project, location.origin + "/"));
@@ -442,7 +442,7 @@
     } catch { notify("制作データを読み込めませんでした"); }
     finally { event.target.value = ""; }
   });
-  $("open-work").addEventListener("click", () => openWithPrompt(workPrompt()));
+  $("open-work").addEventListener("click", () => { checkpointHistory(); openWithPrompt(workPrompt()); });
   $("copy-prompt").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(workPrompt()); notify("制作指示をコピーしました"); }
     catch { notify("コピーできませんでした。.txt保存をご利用ください"); }
@@ -525,7 +525,7 @@
   $("open-announce").addEventListener("click", () => {
     if (!announceMedia.size) { notify("作る媒体を1つ以上選んでください"); return; }
     if (!Object.values(project.fields).some((v) => v.trim())) { notify("先に「素材を入れる」で内容を入力してください"); return; }
-    openWithPrompt(announcePrompt());
+    checkpointHistory(); openWithPrompt(announcePrompt());
   });
   $("download-announce").addEventListener("click", () => {
     if (!announceMedia.size) { notify("作る媒体を1つ以上選んでください"); return; }
@@ -533,6 +533,45 @@
   });
   $("refresh-announce").addEventListener("click", refreshAnnounce);
   renderAnnounceMedia(); updateAnnouncePrompt();
+
+  // ---------- 履歴（左サイドバー下部） ----------
+  const HISTORY_KEY = "lp-history-v1";
+  let historyList = [];
+  try { historyList = Core.normalizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")); }
+  catch { historyList = []; }
+  function saveHistory() {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(historyList)); }
+    catch { notify("履歴の端末保存に失敗しました"); }
+  }
+  function checkpointHistory() {
+    if (!Object.values(project.fields).some((v) => v.trim()) && !project.extraSections.length) { renderHistory(); return; }
+    historyList = Core.pushHistory(historyList, project);
+    saveHistory(); renderHistory();
+  }
+  function renderHistory() {
+    const box = $("history-list"); box.replaceChildren();
+    const sampleItem = element("button", "history-item sample-entry");
+    sampleItem.type = "button";
+    sampleItem.append(element("span", "history-name", "サンプル：商品写真ミニ講座"), element("span", "history-meta", "練習用"));
+    sampleItem.addEventListener("click", () => { checkpointHistory(); sample(); });
+    box.append(sampleItem);
+    for (const entry of historyList) {
+      const item = element("button", "history-item");
+      item.type = "button";
+      const date = entry.updatedAt ? new Date(entry.updatedAt).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+      item.append(element("span", "history-name", entry.name), element("span", "history-meta", `${date}　開く`));
+      item.addEventListener("click", () => openHistory(entry));
+      box.append(item);
+    }
+  }
+  function openHistory(entry) {
+    checkpointHistory();
+    project = Core.normalizeProject(entry.project);
+    persist(); renderAll(); go("info");
+    notify("履歴から開きました");
+  }
+  $("save-history").addEventListener("click", () => { checkpointHistory(); notify("履歴に保存しました"); });
+  renderHistory();
 
   $("refresh-library").addEventListener("click", refreshLibrary);
   $("add-library-entry").addEventListener("click", () => {

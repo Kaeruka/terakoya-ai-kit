@@ -250,6 +250,7 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
     };
     const instructions = [
       "あなたは寺子屋AIワークショップのLP制作担当です。以下の入力JSONだけを事実の根拠にしてください。",
+      "このサイトに同梱されている skills/ 以下の3つのスキル（terakoya-copywriting・terakoya-web-design・terakoya-creative-reviewのSKILL.mdとreferences/内の資料）を読み、コピー・デザイン・レビューの基準として制作と確認に適用してください。読めないスキルファイルがあれば、その名前を報告し、分かる範囲で進めてください。",
       "projectSettingsに素材・構成・デザイン設定があります。制作対象はdesignsの選択済み案だけです。projectSettings内の未選択案を制作対象に加えないでください。",
       "制作前の確認質問や構成案だけの返答は不要です。入力JSONを受け取ったら質問を返さず、未定事項は省略または『準備中』として、その最初の返答で成果物まで進めてください。",
       `入力JSONのdesignsにある選択済み${count}案だけを完成させ、${filenames.join("・")}を保存してください。選ばれていない案は制作しません。案ごとの確認待ちを挟まず、選択した案がそろってからURLまたはファイルを一度に返してください。複数案なら可能な範囲で画像生成とHTML制作を並行して進めてください。`,
@@ -317,5 +318,32 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
     return [...byKey.values()].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
   }
 
-  return { FIELD_KEYS, SECTIONS, PRESETS, ANNOUNCE_MEDIA, blankProject, normalizeProject, snapshotForLibrary, buildConsultPrompt, applyConsultFields, imageBriefFor, validHttpUrl, issues, buildHtml, buildWorkPrompt, buildAnnouncePrompt, normalizeAnnounceEntries, mergeAnnounce, contentFor };
+  const HISTORY_LIMIT = 100;
+  function normalizeHistory(value) {
+    const entries = Array.isArray(value) ? value : [];
+    return entries.slice(0, 300).map((entry) => ({
+      id: String(entry.id || ""),
+      name: String(entry.name || ""),
+      updatedAt: Number.isFinite(Date.parse(entry.updatedAt)) ? new Date(entry.updatedAt).toISOString() : "",
+      sample: entry.sample === true,
+      project: entry.project && typeof entry.project === "object" ? normalizeProject(entry.project) : null
+    })).filter((entry) => entry.id && entry.project);
+  }
+
+  function pushHistory(list, rawProject) {
+    const project = normalizeProject(rawProject);
+    const snapshot = snapshotForLibrary(project);
+    const fingerprint = JSON.stringify(snapshot);
+    const entry = {
+      id: `h-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      name: text(project.fields.title) || "無題の制作",
+      updatedAt: new Date().toISOString(),
+      sample: project.sample,
+      project: snapshot
+    };
+    const rest = (Array.isArray(list) ? list : []).filter((e) => JSON.stringify(e.project) !== fingerprint);
+    return [entry, ...rest].slice(0, HISTORY_LIMIT);
+  }
+
+  return { FIELD_KEYS, SECTIONS, PRESETS, ANNOUNCE_MEDIA, HISTORY_LIMIT, blankProject, normalizeProject, snapshotForLibrary, buildConsultPrompt, applyConsultFields, imageBriefFor, validHttpUrl, issues, buildHtml, buildWorkPrompt, buildAnnouncePrompt, normalizeAnnounceEntries, mergeAnnounce, normalizeHistory, pushHistory, contentFor };
 });
