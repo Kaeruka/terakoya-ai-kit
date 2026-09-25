@@ -139,3 +139,28 @@ test("per-design photos survive normalization and each output uses its assigned 
   assert.match(Core.buildHtml(restored, "friendly", restored.designImages[1]), /REVG/);
   assert.doesNotMatch(Core.buildHtml(restored, "friendly", restored.designImages[1]), /QUJD/);
 });
+
+test("missing photo uses only an image placeholder, including sample projects", () => {
+  const project = Core.blankProject();
+  project.sample = true;
+  project.fields.title = "別の講座";
+  const html = Core.buildHtml(project, "trust");
+  assert.match(html, /class="lp-cover placeholder"><span>画像<\/span>/);
+  assert.doesNotMatch(html, /data:image\/webp;base64/);
+  assert.match(html, /テスト用・架空情報/);
+});
+
+test("three design-specific image directions survive saving and enter one Work request", () => {
+  const project = Core.blankProject();
+  project.fields.title = "絵本づくり講座";
+  project.fields.offer = "親子で絵本を作る";
+  project.imageDirections[1] = "親子の手元を中心に";
+  const restored = Core.normalizeProject(JSON.parse(JSON.stringify(project)));
+  assert.equal(restored.imageDirections[1], "親子の手元を中心に");
+  const prompt = Core.buildWorkPrompt(restored);
+  assert.match(prompt, /親子の手元を中心に/);
+  assert.match(prompt, /絵本づくり講座/);
+  assert.match(prompt, /1回の依頼でLP完成候補3案/);
+  assert.match(prompt, /画像を3案それぞれ生成/);
+  assert.equal((prompt.match(/"imageDirection":/g) || []).length, 3);
+});

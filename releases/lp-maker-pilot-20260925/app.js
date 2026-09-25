@@ -28,8 +28,6 @@
   catch { project = Core.blankProject(); }
   let currentStep = "info";
   let stagedSheet = null;
-  const sampleImage = window.LpSampleImage || "";
-  const sampleVisuals = window.LpSampleVisuals || {};
   let toastTimer;
   const $ = (id) => document.getElementById(id);
 
@@ -149,6 +147,14 @@
       const preset = Core.PRESETS[selected];
       const swatch = element("div", "swatch", "Aa あいう");
       swatch.style.background = preset.bg; swatch.style.color = preset.accent; swatch.style.border = `1px solid ${preset.soft}`;
+      const directionLabel = element("label", "image-direction", "画像の方向性");
+      const directionInput = document.createElement("textarea");
+      directionInput.rows = 4;
+      directionInput.maxLength = 500;
+      directionInput.dataset.imageDirection = String(index);
+      directionInput.value = project.imageDirections[index] || Core.imageBriefFor(project, index);
+      directionInput.addEventListener("input", () => { project.imageDirections[index] = directionInput.value; persist(); updateDynamic(); });
+      directionLabel.append(directionInput);
       const photoLabel = element("label", "design-photo", `案${index + 1}の写真（任意）`);
       const photoInput = document.createElement("input"); photoInput.type = "file"; photoInput.accept = "image/jpeg,image/png,image/webp";
       photoInput.addEventListener("change", async () => {
@@ -158,7 +164,7 @@
         catch (error) { notify(error.message || "写真を読み込めませんでした"); }
       });
       photoLabel.append(photoInput);
-      item.append(select, swatch, element("p", "", preset.description), photoLabel);
+      item.append(select, swatch, element("p", "", preset.description), directionLabel, photoLabel);
       if (project.designImages[index]) {
         const thumb = document.createElement("img"); thumb.src = project.designImages[index]; thumb.alt = `案${index + 1}の写真`; thumb.className = "design-thumb"; item.append(thumb);
         const remove = element("button", "text-button", "この案の写真を外す"); remove.type = "button";
@@ -184,9 +190,7 @@
   }
   function previewImageFor(id, index) {
     if (project.designImages[index]) return project.designImages[index];
-    if (project.heroImage && !(project.sample && project.heroImage === sampleImage)) return project.heroImage;
-    if (!project.sample) return "";
-    return sampleVisuals[id] || sampleImage;
+    return project.heroImage || "";
   }
   async function imageToDataUrl(file) {
     if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 10_000_000) throw new Error("10MB以下のJPEG・PNG・WebPを選んでください");
@@ -206,6 +210,7 @@
       const preset = Core.PRESETS[id];
       const item = element("article", "preview-item");
       const head = element("header"); head.append(element("strong", "", `${index + 1}案 ${preset.label}`), element("span", "", preset.description));
+      const brief = element("p", "image-brief", `画像の方向性: ${project.imageDirections[index] || Core.imageBriefFor(project, index)}`);
       const frame = element("div", "preview-frame");
       const iframe = document.createElement("iframe"); iframe.title = `${preset.label}のLPプレビュー`;
       iframe.setAttribute("sandbox", ""); iframe.loading = "lazy"; iframe.srcdoc = Core.buildHtml(project, id, previewImageFor(id, index)); frame.append(iframe);
@@ -221,7 +226,7 @@
       });
       const save = element("button", "subtle-button", "HTMLを保存");
       save.addEventListener("click", () => download(`lp-draft-${index + 1}-${id}.html`, Core.buildHtml(project, id, previewImageFor(id, index)), "text/html;charset=utf-8"));
-      actions.append(open, save); item.append(head, frame, actions); box.append(item);
+      actions.append(open, save); item.append(head, frame, brief, actions); box.append(item);
     });
     const issueBox = $("issues"); issueBox.replaceChildren();
     const issues = Core.issues(project);
@@ -244,6 +249,10 @@
   }
   function updateDynamic() {
     $("sample-banner").hidden = !project.sample;
+    document.querySelectorAll("[data-image-direction]").forEach((input) => {
+      const index = Number(input.dataset.imageDirection);
+      if (!project.imageDirections[index]) input.value = Core.imageBriefFor(project, index);
+    });
     if (currentStep === "preview") { renderPreviews(); renderEdit(); }
     if (currentStep === "work") updatePrompt();
   }

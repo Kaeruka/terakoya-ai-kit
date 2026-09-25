@@ -41,6 +41,7 @@
       edits: {},
       heroImage: "",
       designImages: ["", "", ""],
+      imageDirections: ["", "", ""],
       pending: [],
       bonusMode: "none",
       bonusIdeaCount: 3,
@@ -62,13 +63,33 @@
     const safeImage = (value) => typeof value === "string" && /^data:image\/webp;base64,[A-Za-z0-9+/=]+$/.test(value) && value.length < 1_000_000 ? value : "";
     const heroImage = safeImage(input.heroImage);
     const designImages = [0, 1, 2].map((index) => safeImage(input.designImages?.[index]));
+    const imageDirections = [0, 1, 2].map((index) => String(input.imageDirections?.[index] || "").slice(0, 500));
     const extraSections = Array.isArray(input.extraSections) ? input.extraSections.slice(0, 8).map((item) => ({
       title: String(item?.title || "").slice(0, 80),
       content: String(item?.content || "").slice(0, 2000)
     })) : [];
     const bonusMode = ["none", "existing", "ideas"].includes(input.bonusMode) ? input.bonusMode : "none";
     const bonusIdeaCount = [3, 5].includes(Number(input.bonusIdeaCount)) ? Number(input.bonusIdeaCount) : 3;
-    return { version: 1, fields, sections, sectionNotes, extraSections, designs, referenceUrls, edits, heroImage, designImages, pending, bonusMode, bonusIdeaCount, sample: input.sample === true };
+    return { version: 1, fields, sections, sectionNotes, extraSections, designs, referenceUrls, edits, heroImage, designImages, imageDirections, pending, bonusMode, bonusIdeaCount, sample: input.sample === true };
+  }
+
+  function imageBriefFor(rawProject, index) {
+    const project = normalizeProject(rawProject);
+    const f = project.fields;
+    const subject = String(f.title || f.offer || "入力した題材").trim().replace(/[。.!！?？]+$/u, "").slice(0, 90);
+    const audience = f.audience ? `対象は${f.audience.slice(0, 60)}。` : "";
+    const compositions = {
+      trust: "自然光の中で題材に関わる手元や道具を正確に見せ、文字を置く余白を残す",
+      friendly: "題材に取り組む場面を近い距離で捉え、表情や手元に親しみを出す",
+      future: "題材を象徴する物や成果物を暗めの空間で大胆に切り取り、見出しを重ねる余白を残す",
+      premium: "題材を象徴する一点を上質な静物写真として写し、質感と広い余白を見せる",
+      cool: "題材に関わる具体的な物をシャープな光で撮り、左右分割に合う構図にする",
+      warm: "題材に取り組む手元や道具を柔らかな光で写し、日常の温度を出す",
+      business: "題材の実務場面や成果物を明瞭に写し、要点がすぐ伝わる構図にする",
+      creative: "題材を象徴する物の形や色を大胆に切り取り、非対称な構図にする",
+      connection: "題材に関わる対話や共同作業の場面を自然に捉え、視線の流れをつくる"
+    };
+    return `「${subject}」のLP用。${audience}${compositions[project.designs[index]]}。実在の人物・会場・実績の証拠にはしない。`;
   }
 
   function esc(value) {
@@ -149,10 +170,11 @@
     const extras = project.extraSections.filter((s) => text(s.title) && text(s.content)).map((s) => `<section class="section"><div class="section-inner"><div class="section-title"><p class="eyebrow">MORE</p><h2>${esc(s.title)}</h2></div><div class="section-body">${paragraphs(s.content)}</div></div></section>`).join("");
     const imageSource = heroImage || project.heroImage;
     const safeImage = /^data:image\/webp;base64,[A-Za-z0-9+/=]+$/.test(imageSource) && imageSource.length < 1_000_000 ? imageSource : "";
-    const cover = safeImage ? `<figure class="lp-cover"><img src="${safeImage}" alt="講座・サービスのイメージ写真"><figcaption>${project.sample && !project.heroImage && !project.designImages.includes(imageSource) ? "イメージ写真（生成画像）" : "提供画像"}</figcaption></figure>` : "";
+    const cover = safeImage ? `<figure class="lp-cover"><img src="${safeImage}" alt="講座・サービスのイメージ写真"><figcaption>提供画像</figcaption></figure>` : '<figure class="lp-cover placeholder"><span>画像</span></figure>';
     const header = project.sample ? '<div class="sample">テスト用・架空情報</div>' : "";
     const dark = presetId === "future";
     return `<!doctype html>\n<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="${dark ? "dark" : "light"}"><title>${esc(title)} | LP初稿</title><style>
+.lp-cover.placeholder{display:grid;place-items:center;background:${preset.soft};border:1px solid ${preset.accent}44;color:${preset.ink}88}.lp-cover.placeholder span{font-size:20px}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:${preset.bg};color:${preset.ink};font-family:'Yu Gothic',Meiryo,sans-serif;line-height:1.75}a{color:inherit}p{margin:0 0 1em}.sample{background:${preset.accent};color:${dark ? "#11222a" : "#fff"};text-align:center;padding:7px;font-size:13px;font-weight:700}.shell{max-width:1180px;margin:auto;padding:0 32px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;border-bottom:1px solid ${preset.accent}55}.brand{font-weight:800;font-size:14px}.top a{text-decoration:none;font-size:13px}.hero{position:relative;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);min-height:490px;gap:34px;align-items:stretch;padding:34px 0 45px;border-bottom:1px solid ${preset.accent}66}.hero-copy{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;min-width:0}.eyebrow{font-size:12px;font-weight:800;color:${preset.accent};letter-spacing:0}.hero h1{font:700 clamp(34px,4.6vw,64px)/1.25 ${preset.heading};max-width:850px;margin:14px 0 22px;overflow-wrap:anywhere}.hero .lede{font-size:18px;max-width:640px}.hero .meta{font-size:14px;opacity:.8;margin-top:24px}.lp-cover{position:relative;min-height:380px;margin:0;overflow:hidden}.lp-cover img{display:block;width:100%;height:100%;position:absolute;inset:0;object-fit:cover}.lp-cover figcaption{position:absolute;right:12px;bottom:10px;padding:3px 7px;background:#000a;color:white;font-size:11px}.hero:not(:has(.lp-cover)){grid-template-columns:1fr;min-height:330px}.hero:not(:has(.lp-cover)) .hero-copy{min-height:300px}.section{padding:64px 0;border-bottom:1px solid ${preset.accent}33}.section.alternate{background:${preset.soft};padding-left:24px;padding-right:24px}.section-inner{display:grid;grid-template-columns:minmax(0,.37fr) minmax(0,.63fr);gap:36px;align-items:start}.section h2{font:700 clamp(25px,3vw,38px)/1.35 ${preset.heading};margin:8px 0 0}.section p{max-width:760px;font-size:16px;white-space:pre-wrap;overflow-wrap:anywhere}.section-body{padding-top:22px}.cta{text-align:center}.cta .section-inner{display:block}.cta p{margin-left:auto;margin-right:auto}.button{display:inline-block;background:${preset.accent};color:${dark ? "#11222a" : "#fff"};text-decoration:none;padding:15px 36px;font-weight:800;margin-top:16px}.button.disabled{opacity:.55;cursor:default}footer{padding:38px 0;font-size:13px;opacity:.7}
 body[data-design="trust"] .hero{grid-template-columns:1fr 1fr}body[data-design="trust"] .hero-copy{padding-left:24px;border-left:5px solid ${preset.accent}}body[data-design="trust"] .lp-cover img{object-position:65% center}body[data-design="trust"] .section-title{border-top:3px solid ${preset.accent};padding-top:15px}
 body[data-design="friendly"] .hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}body[data-design="friendly"] .hero-copy{max-width:760px;min-height:280px}body[data-design="friendly"] .lp-cover{width:100%;height:320px;min-height:320px}body[data-design="friendly"] .section-inner{display:block;max-width:730px;margin:auto;text-align:center}body[data-design="friendly"] .section-body{padding-top:12px}body[data-design="friendly"] .section p{margin-left:auto;margin-right:auto}
@@ -174,7 +196,7 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
       sections: project.sections,
       sectionNotes: project.sectionNotes,
       extraSections: project.extraSections,
-      designs: project.designs.map((id) => ({ id, label: PRESETS[id].label, description: PRESETS[id].description })),
+      designs: project.designs.map((id, index) => ({ id, label: PRESETS[id].label, description: PRESETS[id].description, imageDirection: text(project.imageDirections[index]) || imageBriefFor(project, index) })),
       imageStatus: { sharedProvided: Boolean(project.heroImage), perDesignProvided: project.designImages.map(Boolean) },
       referenceUrls: project.referenceUrls.filter((url) => validHttpUrl(url)),
       existingEdits: project.edits,
@@ -186,10 +208,10 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
     const instructions = [
       "あなたは寺子屋AIワークショップのLP制作担当です。以下の入力JSONだけを事実の根拠にしてください。",
       "制作前の確認質問や構成案だけの返答は不要です。入力JSONを受け取ったら質問を返さず、未定事項は省略または『準備中』として、その最初の返答で成果物まで進めてください。",
-      "実際に開けるLP完成候補3案を、lp-01.html・lp-02.html・lp-03.htmlという別々のHTMLファイルとして制作・保存してください。サイト制作機能が使える場合はそこで3案を作り、使えない場合は3つのHTML本文またはダウンロード可能なファイルを返してください。設計意図だけで終えないでください。",
+      "1回の依頼でLP完成候補3案をまとめて制作し、lp-01.html・lp-02.html・lp-03.htmlを別々に保存してください。案ごとの確認待ちや1案ずつの返答を挟まず、3案がそろってからURLまたはファイルを返してください。可能なら各案の画像生成を並行して進め、その間にHTMLも組み立ててください。内部の並列実行ができない環境でも3案を一度の依頼で完成させてください。",
       "未定・未入力項目は質問で止めず、省略または『未定』『受付準備中』と表示してください。講師欄・録画配布・キャンセル条件・実績・お客様の声は、根拠となる入力がなければ掲載しません。架空のURLや事実を補いません。",
       "入力JSONのsampleがtrueなら、全案の最上部に『テスト用・架空情報』と明記し、実際の募集や販売に使える状態と誤認させないでください。",
-      "3案は同じ型の色違いにせず、ヒーロー構成、本文の段組み、写真の位置と大きさ、見出しの強弱、余白、情報順序を選択した方向性ごとに変えてください。入力JSONに添付写真の記録があっても、画像ファイル自体はこの依頼に含まれないため、見たふりをせず、必要なら差し替え箇所を明示してください。ヒーロー画像を制作できる機能があれば、講座内容に合う説明用の画像を生成して実際に配置してください。使えなければ、実案件に無関係な架空写真を置かず、写真なしでも成立するレイアウトにしてください。スマートフォンの本文は16px以上にします。",
+      "3案は同じ型の色違いにせず、ヒーロー構成、本文の段組み、画像の位置と大きさ、見出しの強弱、余白、情報順序を選択した方向性ごとに変えてください。designsのimageDirectionを各案の画像方針として使い、内容に合う画像を3案それぞれ生成して実際にHTMLへ配置してください。画像生成が使えない場合は無関係な写真で埋めず、写真なしで成立する完成LP3案を返し、画像のみ未生成と明記してください。スマートフォンの本文は16px以上にします。",
       "imageStatusはローカル画面で写真が指定されているかの記録だけです。画像データはこの依頼文に含まれません。同じ写真をWork版に使う場合は本人が別途添付する必要があります。",
       "個別指示を優先し、構成のautoは必要性を判断、includeは入れる、excludeは入れないでください。実績・口コミ・価格・日時・定員・割引・保証・講師情報などの事実を創作しないでください。特典案は採用前にLPへ掲載しません。",
       "申込URLがなければ無効な『受付準備中』を表示し、リンクは作りません。参考LPは特徴のみ参考にして、文章や画像を複製しません。外部公開・デプロイ・SNS投稿はしません。",
@@ -198,5 +220,5 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
     return `${instructions.join("\n\n")}\n\n入力JSON:\n${JSON.stringify(payload, null, 2)}`;
   }
 
-  return { FIELD_KEYS, SECTIONS, PRESETS, blankProject, normalizeProject, validHttpUrl, issues, buildHtml, buildWorkPrompt, contentFor };
+  return { FIELD_KEYS, SECTIONS, PRESETS, blankProject, normalizeProject, imageBriefFor, validHttpUrl, issues, buildHtml, buildWorkPrompt, contentFor };
 });

@@ -56,13 +56,13 @@ test("all three generated LPs retain the fiction label and no invented applicati
   }
 });
 
-test("sample illustration is embedded for standalone LP output", () => {
+test("provided image is embedded while missing image stays a placeholder", () => {
   const { project } = Sheet.parseLegacySheet(fixture);
   const html = Core.buildHtml(project, "trust", "data:image/webp;base64,QUJD");
   assert.match(html, /class="lp-cover"/);
-  assert.match(html, /イメージ写真（生成画像）/);
+  assert.match(html, /提供画像/);
   assert.match(html, /data:image\/webp;base64,QUJD/);
-  assert.doesNotMatch(Core.buildHtml(project, "trust", "javascript:bad"), /class="lp-cover"/);
+  assert.match(Core.buildHtml(project, "trust", "javascript:bad"), /class="lp-cover placeholder"/);
 });
 
 test("Work request proceeds without confirmation questions for fictional sample", () => {

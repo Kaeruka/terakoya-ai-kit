@@ -30,7 +30,10 @@
 .local-image img[hidden], .local-image button[hidden] { display: none; }
 .design-photo { display: grid; gap: 6px; margin-top: 10px; font-size: 12px; font-weight: 700; color: #36535b; }
 .design-photo input { width: 100%; font-size: 11px; }
+.image-direction { display: grid; gap: 6px; margin-top: 12px; font-size: 12px; font-weight: 700; color: #36535b; }
+.image-direction textarea { width: 100%; min-height: 112px; resize: vertical; font-size: 13px; font-weight: 400; line-height: 1.5; }
 .design-thumb { display: block; width: 100%; height: 80px; object-fit: cover; margin-top: 8px; border-radius: 3px; }
+.image-brief { margin: 10px 0 0; font-size: 12px; color: #536e75; overflow-wrap: anywhere; }
 .preview-frame { position: relative; }
 .preview-frame iframe { position: absolute; left: 0; top: 0; width: 960px; height: 1600px; transform-origin: top left; }
 .issue-details { max-width: 760px; margin: 0 0 20px; padding: 10px 14px; background: #fff9ef; border-color: #ead6b1; }
