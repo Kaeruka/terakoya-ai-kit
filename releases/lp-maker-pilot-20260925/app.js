@@ -341,7 +341,6 @@
     if (step === "preview") { renderPreviews(); renderEdit(); }
     if (step === "work") { renderWorkSelection(); updatePrompt(); }
     if (step === "library") refreshLibrary();
-    if (step === "announce") { updateAnnouncePrompt(); refreshAnnounce(); }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function sample() {
@@ -448,93 +447,8 @@
     catch { notify("コピーできませんでした。.txt保存をご利用ください"); }
   });
   $("download-prompt").addEventListener("click", () => download("lp-work-request.txt", workPrompt(), "text/plain;charset=utf-8"));
-  // ---------- 告知文（07） ----------
-  const ANNOUNCE_KEY = "lp-announce-v1";
-  let announce = [];
-  try { announce = Core.normalizeAnnounceEntries(JSON.parse(localStorage.getItem(ANNOUNCE_KEY) || "[]")); }
-  catch { announce = []; }
-  const announceMedia = new Set(["x", "line", "email"]);
-  function saveAnnounce() {
-    try { localStorage.setItem(ANNOUNCE_KEY, JSON.stringify(announce)); }
-    catch { notify("告知文の端末保存に失敗しました"); }
-  }
-  function renderAnnounceMedia() {
-    const box = $("announce-media"); box.replaceChildren();
-    for (const [id, name] of Core.ANNOUNCE_MEDIA) {
-      const label = element("label", "work-design-choice");
-      const input = document.createElement("input");
-      input.type = "checkbox"; input.checked = announceMedia.has(id);
-      input.addEventListener("change", () => {
-        if (input.checked) announceMedia.add(id); else announceMedia.delete(id);
-        updateAnnouncePrompt();
-      });
-      label.append(input, element("span", "", name)); box.append(label);
-    }
-  }
-  function announcePrompt() {
-    const requestId = `ann-${Date.now().toString(36)}`;
-    return Core.buildAnnouncePrompt(project, [...announceMedia], requestId, location.origin + "/");
-  }
-  function updateAnnouncePrompt() {
-    $("announce-preview").textContent = announcePrompt();
-  }
-  function renderAnnounce() {
-    const box = $("announce-results"); box.replaceChildren();
-    if (!announce.length) {
-      box.append(element("p", "sub", "まだ告知文はありません。Workから届くとここに積み上がります。"));
-      return;
-    }
-    for (const entry of announce) {
-      for (const r of entry.results) {
-        const name = Core.ANNOUNCE_MEDIA.find((m) => m[0] === r.id)?.[1] || r.id;
-        const card = element("article", "announce-card");
-        const head = element("header");
-        head.append(element("strong", "", name), element("span", "", `${entry.requestId}${entry.createdAt ? " ・ " + new Date(entry.createdAt).toLocaleString("ja-JP") : ""}`));
-        const body = element("pre", "announce-text", r.text);
-        const actions = element("div", "preview-actions");
-        const copy = element("button", "subtle-button", "本文をコピー");
-        copy.addEventListener("click", async () => {
-          try { await navigator.clipboard.writeText(r.text); copy.textContent = "コピーしました"; setTimeout(() => copy.textContent = "本文をコピー", 1500); }
-          catch { notify("コピーできませんでした"); }
-        });
-        actions.append(copy);
-        card.append(head, body);
-        if (r.warnings.length) {
-          const warn = element("ul", "announce-warnings");
-          r.warnings.forEach((w) => warn.append(element("li", "", w)));
-          card.append(warn);
-        }
-        card.append(actions); box.append(card);
-      }
-    }
-  }
-  async function refreshAnnounce() {
-    $("announce-status").textContent = "一覧を確認中…";
-    try {
-      const response = await fetch(`announcements.json?ts=${Date.now()}`, { cache: "no-store", credentials: "same-origin" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const remote = Core.normalizeAnnounceEntries(await response.json());
-      announce = Core.mergeAnnounce(announce, remote);
-      saveAnnounce(); renderAnnounce(); renderHistory();
-      $("announce-status").textContent = `${announce.length}件の依頼を表示中。Workで追加した告知文はここに反映されます。`;
-    } catch {
-      $("announce-status").textContent = "サイトの一覧に接続できません。端末に保存済みの告知文を表示しています。";
-      renderAnnounce(); renderHistory();
-    }
-  }
-  $("open-announce").addEventListener("click", () => {
-    if (!announceMedia.size) { notify("作る媒体を1つ以上選んでください"); return; }
-    if (!Object.values(project.fields).some((v) => v.trim())) { notify("先に「素材を入れる」で内容を入力してください"); return; }
-    checkpointHistory(); openWithPrompt(announcePrompt());
-  });
-  $("download-announce").addEventListener("click", () => {
-    if (!announceMedia.size) { notify("作る媒体を1つ以上選んでください"); return; }
-    download("lp-announce-request.txt", announcePrompt(), "text/plain;charset=utf-8");
-  });
-  $("refresh-announce").addEventListener("click", refreshAnnounce);
-  renderAnnounceMedia(); updateAnnouncePrompt();
 
-  // ---------- 履歴（左サイドバー下部） ----------
+  // ---------- 履歴・制作一覧（左サイドバー下部） ----------
   const HISTORY_KEY = "lp-history-v1";
   let historyList = [];
   try { historyList = Core.normalizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")); }
@@ -561,12 +475,6 @@
     }
     for (const entry of library) {
       items.push({ date: entry.createdAt, name: entry.title, kind: "完成LP", open: () => entry.url ? window.open(entry.url, "_blank", "noopener,noreferrer") : go("library") });
-    }
-    for (const entry of announce) {
-      for (const result of entry.results) {
-        const mediaName = Core.ANNOUNCE_MEDIA.find((m) => m[0] === result.id)?.[1] || result.id;
-        items.push({ date: entry.createdAt, name: `${mediaName}の告知文`, kind: "告知文", open: () => go("announce") });
-      }
     }
     items.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     for (const item of items) {
@@ -607,7 +515,6 @@
   window.addEventListener("focus", () => {
     refreshHistory();
     if (currentStep === "library") refreshLibrary();
-    if (currentStep === "announce") refreshAnnounce();
   });
 
   renderAll();

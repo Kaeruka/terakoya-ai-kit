@@ -67,14 +67,6 @@
 .history-meta { display: block; font-size: 10px; color: #8fb5bc; margin-top: 2px; }
 .history-item.sample-entry .history-name { color: #9ed2d6; }
 
-.announce-results { display: grid; gap: 14px; margin-top: 18px; }
-.announce-card { border: 1px solid #d6e3e5; background: #fff; border-radius: 5px; overflow: hidden; }
-.announce-card header { display: flex; justify-content: space-between; align-items: center; gap: 9px; padding: 11px 13px; background: #f4f8f8; }
-.announce-card header strong { font-size: 14px; }
-.announce-card header span { font-size: 11px; color: #60767e; }
-.announce-text { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 14px; line-height: 1.7; padding: 13px; max-height: 340px; overflow-y: auto; margin: 0; }
-.announce-warnings { margin: 0 13px 12px; padding-left: 20px; font-size: 13px; color: #7a4e24; }
-.announce-card .preview-actions { padding: 12px 13px; }
 .work-design-choice { display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 10px 12px; border: 1px solid #c9d9dc; border-radius: 4px; cursor: pointer; }
 .work-design-choice:has(input:checked) { border-color: #08718a; background: #edf7f8; }
 .work-design-choice input { width: 17px; height: 17px; margin: 0; accent-color: #08718a; flex: none; }

@@ -26,7 +26,6 @@
       <button class="step" data-step="preview"><span>04</span>3案を比べる</button>
       <button class="step" data-step="work"><span>05</span>Workで仕上げる</button>
       <button class="step" data-step="library"><span>06</span>完成LP</button>
-      <button class="step" data-step="announce"><span>07</span>告知文</button>
       <div class="history">
         <div class="history-head"><p>制作一覧</p><button id="save-history" class="history-save" type="button">今の内容を保存</button></div>
         <div id="history-list" class="history-list"></div>
@@ -80,15 +79,6 @@
         <p id="library-status" class="library-status" role="status" aria-live="polite"></p>
         <div id="library-grid" class="library-grid"></div>
         <details class="library-register"><summary>リンクを追加する</summary><p>現在の制作設定も、この端末に一緒に保存します。</p><div class="library-register-fields"><label>LPの名前<input id="library-title-input" type="text" maxlength="120" placeholder="例：商品写真講座のLP"></label><label>完成LPのリンク<input id="library-url-input" type="url" placeholder="https://..."></label><label>サムネ画像のリンク（任意）<input id="library-thumb-input" type="url" placeholder="https://..."></label><button id="add-library-entry" class="primary-button" type="button">一覧に追加</button></div></details>
-      </section>
-      <section id="announce" class="panel" aria-labelledby="announce-title">
-        <div class="panel-head"><div><p class="eyebrow">07 / ANNOUNCE</p><h1 id="announce-title">LP以外の告知文</h1><p class="sub">同じ素材からSNS・メールなどの告知文を作ります。完成した文はWorkがこのサイトに保存し、下の一覧に積み上がります。</p></div><button id="refresh-announce" class="subtle-button" type="button">一覧を更新</button></div>
-        <fieldset class="work-selection"><legend>作る媒体を選ぶ</legend><div id="announce-media" class="work-designs"></div></fieldset>
-        <div class="work-actions"><button id="open-announce" class="primary-button">依頼文を入れてChatGPTを開く <span aria-hidden="true">↗</span></button><button id="download-announce" class="subtle-button">.txtで保存</button></div>
-        <p class="privacy-note">自動送信はしません。新しいタブで入力内容を確認して送信してください。結果はWorkがこのサイトの announcements.json に追記し、下の一覧へ自動で反映されます。調整はWork側の会話で続きを頼むと、新しい結果として積み上がります。</p>
-        <details><summary>制作指示を確認する</summary><pre id="announce-preview"></pre></details>
-        <p id="announce-status" class="library-status" role="status" aria-live="polite"></p>
-        <div id="announce-results" class="announce-results"></div>
       </section>
     </main>
   </div>
