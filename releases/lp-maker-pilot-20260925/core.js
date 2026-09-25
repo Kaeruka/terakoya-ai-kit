@@ -267,5 +267,55 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
     return `${instructions.join("\n\n")}\n\n入力JSON:\n${JSON.stringify(payload, null, 2)}`;
   }
 
-  return { FIELD_KEYS, SECTIONS, PRESETS, blankProject, normalizeProject, snapshotForLibrary, buildConsultPrompt, applyConsultFields, imageBriefFor, validHttpUrl, issues, buildHtml, buildWorkPrompt, contentFor };
+  const ANNOUNCE_MEDIA = [
+    ["copy", "キャッチコピー3案"], ["x", "X投稿"], ["instagram", "Instagram投稿"],
+    ["line", "LINE配信"], ["email", "案内メール"], ["flyer", "チラシ掲載文"], ["checklist", "確認リスト"]
+  ];
+
+  function buildAnnouncePrompt(rawProject, mediaIds, requestId, toolUrl = "") {
+    const project = normalizeProject(rawProject);
+    const privateToolUrl = /^https:\/\/[^/]+\.chatgpt\.site\/?$/.test(toolUrl) ? toolUrl.replace(/\/$/, "") : "";
+    const mediaNames = mediaIds.map((id) => ANNOUNCE_MEDIA.find((m) => m[0] === id)?.[1] || id);
+    const payload = {
+      requestId,
+      media: mediaIds,
+      mediaNames,
+      projectSettings: snapshotForLibrary(project),
+      announceLibrary: privateToolUrl ? { toolUrl: privateToolUrl, manifest: "announcements.json" } : null
+    };
+    const instructions = [
+      "あなたは寺子屋AIワークショップの告知物制作担当です。以下の入力JSONだけを事実の根拠にしてください。",
+      `選択された媒体（${mediaNames.join("、")}）の告知文を作ってください。選択されていない媒体は作りません。`,
+      "制作前の確認質問は不要です。未定・未入力項目は省略または『未定』『受付準備中』とし、架空の日時・価格・実績・口コミ・定員・割引・保証・URL・申込先を創作しないでください。申込URLがなければ『受付準備中』とだけ示し、リンクは作りません。",
+      "媒体ごとにその媒体らしい文体と長さにしてください。キャッチコピーは対象者・持ち帰り物・取り組み方の異なる角度の3案にします。「未来を変える」のような汎用表現は具体語に置き換えます。",
+      `各媒体の結果は {"requestId":"${requestId}","results":[{"id":"<mediaのid>","text":"本文","warnings":[],"review":{"version":"TERAKOYA-CREATIVE-04","decisions":[],"changes":[],"checks":[],"unverified":[]}}]} の形にしてください。warningsには未解決の不足・矛盾・確認事項を入れ、reviewには実際の判断・修正・確認・未検証を記録してください。見ていない表示を合格と断定しません。`,
+      privateToolUrl
+        ? `完成したら、入力JSONのannounceLibrary.toolUrlにある本人限定サイトを確認し、結果JSONを announce/${requestId}.json として保存し、サイト直下の announcements.json（無ければ {"entries":[]} を作成）の entries に {"requestId":"${requestId}","createdAt":"<ISO 8601>","results":[<結果>]} を追記してください。既存のentries・完成LP・ツールを壊さず、本人限定の新バージョンとして発行し、発行後にURLが開けることを確認してください。サイト編集ができない場合は成功と装わず、結果JSONをコードブロックで返してください。`
+        : "現在のツールはローカル表示です。結果JSONをコードブロックで返してください。",
+      "設計意図の説明だけで終えず、まず成果物を完成させてください。結果JSONのあとに要確認事項を短く添えてください。"
+    ];
+    return `${instructions.join("\n\n")}\n\n入力JSON:\n${JSON.stringify(payload, null, 2)}`;
+  }
+
+  function normalizeAnnounceEntries(value) {
+    const entries = Array.isArray(value) ? value : value?.entries;
+    if (!Array.isArray(entries)) return [];
+    return entries.slice(0, 300).map((entry) => ({
+      requestId: String(entry.requestId || ""),
+      createdAt: Number.isFinite(Date.parse(entry.createdAt)) ? new Date(entry.createdAt).toISOString() : "",
+      results: Array.isArray(entry.results) ? entry.results.filter((r) => r && typeof r.text === "string" && r.text.trim()).map((r) => ({
+        id: String(r.id || ""), text: r.text,
+        warnings: Array.isArray(r.warnings) ? r.warnings.slice(0, 20).map(String) : [],
+        review: r.review && typeof r.review === "object" ? r.review : null
+      })) : []
+    })).filter((entry) => entry.requestId && entry.results.length);
+  }
+
+  function mergeAnnounce(local, remote) {
+    const byKey = new Map();
+    for (const entry of [...local, ...remote]) byKey.set(`${entry.requestId}:${entry.createdAt}`, entry);
+    return [...byKey.values()].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  }
+
+  return { FIELD_KEYS, SECTIONS, PRESETS, ANNOUNCE_MEDIA, blankProject, normalizeProject, snapshotForLibrary, buildConsultPrompt, applyConsultFields, imageBriefFor, validHttpUrl, issues, buildHtml, buildWorkPrompt, buildAnnouncePrompt, normalizeAnnounceEntries, mergeAnnounce, contentFor };
 });
