@@ -37,6 +37,7 @@
       sectionNotes: {},
       extraSections: [],
       designs: ["trust", "friendly", "future"],
+      workDesigns: [0],
       referenceUrls: ["", "", ""],
       edits: {},
       heroImage: "",
@@ -56,6 +57,8 @@
     const sections = Object.fromEntries(SECTIONS.map(([key]) => [key, ["auto", "include", "exclude"].includes(input.sections?.[key]) ? input.sections[key] : blank.sections[key]]));
     const sectionNotes = Object.fromEntries(SECTIONS.map(([key]) => [key, String(input.sectionNotes?.[key] || "").slice(0, 1500)]));
     const designs = [0, 1, 2].map((i) => PRESETS[input.designs?.[i]] ? input.designs[i] : blank.designs[i]);
+    const workDesigns = Array.isArray(input.workDesigns) ? [...new Set(input.workDesigns.filter((index) => Number.isInteger(index) && index >= 0 && index < 3))].sort() : blank.workDesigns;
+    if (!workDesigns.length) workDesigns.push(0);
     const referenceUrls = [0, 1, 2].map((i) => String(input.referenceUrls?.[i] || "").slice(0, 500));
     const edits = {};
     for (const [key] of SECTIONS) if (typeof input.edits?.[key] === "string") edits[key] = input.edits[key].slice(0, 6000);
@@ -70,14 +73,14 @@
     })) : [];
     const bonusMode = ["none", "existing", "ideas"].includes(input.bonusMode) ? input.bonusMode : "none";
     const bonusIdeaCount = [3, 5].includes(Number(input.bonusIdeaCount)) ? Number(input.bonusIdeaCount) : 3;
-    return { version: 1, fields, sections, sectionNotes, extraSections, designs, referenceUrls, edits, heroImage, designImages, imageDirections, pending, bonusMode, bonusIdeaCount, sample: input.sample === true };
+    return { version: 1, fields, sections, sectionNotes, extraSections, designs, workDesigns, referenceUrls, edits, heroImage, designImages, imageDirections, pending, bonusMode, bonusIdeaCount, sample: input.sample === true };
   }
 
   function imageBriefFor(rawProject, index) {
     const project = normalizeProject(rawProject);
     const f = project.fields;
     const subject = String(f.title || f.offer || "入力した題材").trim().replace(/[。.!！?？]+$/u, "").slice(0, 90);
-    const audience = f.audience ? `対象は${f.audience.slice(0, 60)}。` : "";
+    const audience = f.audience ? `対象は${f.audience.trim().replace(/[。.!！?？]+$/u, "").slice(0, 60)}。` : "";
     const compositions = {
       trust: "自然光の中で題材に関わる手元や道具を正確に見せ、文字を置く余白を残す",
       friendly: "題材に取り組む場面を近い距離で捉え、表情や手元に親しみを出す",
@@ -191,14 +194,16 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
 
   function buildWorkPrompt(rawProject) {
     const project = normalizeProject(rawProject);
+    const selected = project.workDesigns;
+    const count = selected.length;
+    const filenames = selected.map((index) => `lp-${String(index + 1).padStart(2, "0")}.html`);
     const payload = {
       fields: project.fields,
       sections: project.sections,
       sectionNotes: project.sectionNotes,
       extraSections: project.extraSections,
-      designs: project.designs.map((id, index) => ({ id, label: PRESETS[id].label, description: PRESETS[id].description, imageDirection: text(project.imageDirections[index]) || imageBriefFor(project, index) })),
-      imageStatus: { sharedProvided: Boolean(project.heroImage), perDesignProvided: project.designImages.map(Boolean) },
-      referenceUrls: project.referenceUrls.filter((url) => validHttpUrl(url)),
+      designs: selected.map((index) => ({ slot: index + 1, filename: `lp-${String(index + 1).padStart(2, "0")}.html`, id: project.designs[index], label: PRESETS[project.designs[index]].label, description: PRESETS[project.designs[index]].description, imageDirection: text(project.imageDirections[index]) || imageBriefFor(project, index), referenceUrl: validHttpUrl(project.referenceUrls[index]) })),
+      imageStatus: { sharedProvided: Boolean(project.heroImage), perDesignProvided: selected.map((index) => ({ slot: index + 1, provided: Boolean(project.designImages[index]) })) },
       existingEdits: project.edits,
       pending: project.pending,
       bonusMode: project.bonusMode,
@@ -208,14 +213,14 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
     const instructions = [
       "あなたは寺子屋AIワークショップのLP制作担当です。以下の入力JSONだけを事実の根拠にしてください。",
       "制作前の確認質問や構成案だけの返答は不要です。入力JSONを受け取ったら質問を返さず、未定事項は省略または『準備中』として、その最初の返答で成果物まで進めてください。",
-      "1回の依頼でLP完成候補3案をまとめて制作し、lp-01.html・lp-02.html・lp-03.htmlを別々に保存してください。案ごとの確認待ちや1案ずつの返答を挟まず、3案がそろってからURLまたはファイルを返してください。可能なら各案の画像生成を並行して進め、その間にHTMLも組み立ててください。内部の並列実行ができない環境でも3案を一度の依頼で完成させてください。",
+      `入力JSONのdesignsにある選択済み${count}案だけを完成させ、${filenames.join("・")}を保存してください。選ばれていない案は制作しません。案ごとの確認待ちを挟まず、選択した案がそろってからURLまたはファイルを一度に返してください。複数案なら可能な範囲で画像生成とHTML制作を並行して進めてください。`,
       "未定・未入力項目は質問で止めず、省略または『未定』『受付準備中』と表示してください。講師欄・録画配布・キャンセル条件・実績・お客様の声は、根拠となる入力がなければ掲載しません。架空のURLや事実を補いません。",
       "入力JSONのsampleがtrueなら、全案の最上部に『テスト用・架空情報』と明記し、実際の募集や販売に使える状態と誤認させないでください。",
-      "3案は同じ型の色違いにせず、ヒーロー構成、本文の段組み、画像の位置と大きさ、見出しの強弱、余白、情報順序を選択した方向性ごとに変えてください。designsのimageDirectionを各案の画像方針として使い、内容に合う画像を3案それぞれ生成して実際にHTMLへ配置してください。画像生成が使えない場合は無関係な写真で埋めず、写真なしで成立する完成LP3案を返し、画像のみ未生成と明記してください。スマートフォンの本文は16px以上にします。",
+      "複数案を選んだ場合は同じ型の色違いにせず、ヒーロー構成、本文の段組み、画像の位置と大きさ、見出しの強弱、余白、情報順序を方向性ごとに変えてください。designsのimageDirectionを各案の画像方針として使い、内容に合う画像を選択した案それぞれに生成してHTMLへ配置してください。画像生成が使えない場合は無関係な写真で埋めず、写真なしで成立する選択案のLPを返し、画像のみ未生成と明記してください。スマートフォンの本文は16px以上にします。",
       "imageStatusはローカル画面で写真が指定されているかの記録だけです。画像データはこの依頼文に含まれません。同じ写真をWork版に使う場合は本人が別途添付する必要があります。",
       "個別指示を優先し、構成のautoは必要性を判断、includeは入れる、excludeは入れないでください。実績・口コミ・価格・日時・定員・割引・保証・講師情報などの事実を創作しないでください。特典案は採用前にLPへ掲載しません。",
       "申込URLがなければ無効な『受付準備中』を表示し、リンクは作りません。参考LPは特徴のみ参考にして、文章や画像を複製しません。外部公開・デプロイ・SNS投稿はしません。",
-      "3案のHTMLのほか、要確認事項を短く添えてください。設計意図や素材案だけで回答を終えず、まず成果物を完成させてください。"
+      "選択した案のHTMLのほか、要確認事項を短く添えてください。設計意図や素材案だけで回答を終えず、まず成果物を完成させてください。"
     ];
     return `${instructions.join("\n\n")}\n\n入力JSON:\n${JSON.stringify(payload, null, 2)}`;
   }

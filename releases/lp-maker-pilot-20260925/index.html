@@ -54,7 +54,7 @@
       </section>
 
       <section id="preview" class="panel" aria-labelledby="preview-title">
-        <div class="panel-head"><div><p class="eyebrow">04 / COMPARE</p><h1 id="preview-title">LP初稿を比べる</h1><p class="sub">写真が未指定の案は画像の仮枠です。各案の画像はWorkで制作します。</p></div></div>
+        <div class="panel-head"><div><p class="eyebrow">04 / COMPARE</p><h1 id="preview-title">LP初稿を比べる</h1><p class="sub">写真が未指定の案は画像の仮枠です。画像制作は選んだ案についてWorkに依頼します。</p></div></div>
         <div id="issues" class="issues" aria-live="polite"></div>
         <div id="previews" class="preview-grid"></div>
         <div class="edit-block"><div><p class="eyebrow">PARTIAL EDIT</p><h2>文章を1か所直す</h2><p>選んだ箇所だけ書き換えます。他の項目や3案のデザインはそのままです。</p></div><label>修正する箇所<select id="edit-section"></select></label><label>文章<textarea id="edit-content" rows="5"></textarea></label><div class="inline-actions"><button id="save-edit" class="subtle-button">この箇所を保存</button><button id="reset-edit" class="text-button">元に戻す</button></div></div>
@@ -62,12 +62,13 @@
       </section>
 
       <section id="work" class="panel" aria-labelledby="work-title">
-        <div class="panel-head"><div><p class="eyebrow">05 / CHATGPT WORK</p><h1 id="work-title">3案をWorkで仕上げる</h1><p class="sub">確定情報だけで、質問待ちせずに3案の制作を依頼します。</p></div></div>
-        <div class="work-flow"><div><strong>1</strong><p>依頼文をWorkへ渡す</p></div><div><strong>2</strong><p>そのまま3案を制作</p></div><div><strong>3</strong><p>比較・修正する</p></div><div><strong>4</strong><p>本人用に保存する</p></div></div>
+        <div class="panel-head"><div><p class="eyebrow">05 / CHATGPT WORK</p><h1 id="work-title">選んだ案をWorkで仕上げる</h1><p class="sub">気になる案だけ選んで制作します。1案だけでも、複数案でも大丈夫です。</p></div></div>
+        <fieldset class="work-selection"><legend>完成させる案を選ぶ</legend><div id="work-designs" class="work-designs"></div><p id="work-selection-count" aria-live="polite"></p></fieldset>
+        <div class="work-flow"><div><strong>1</strong><p>完成させる案を選ぶ</p></div><div><strong>2</strong><p>依頼文をWorkへ渡す</p></div><div><strong>3</strong><p>選んだ案を制作</p></div><div><strong>4</strong><p>確認・保存する</p></div></div>
         <div class="work-actions"><button id="open-work" class="primary-button">依頼文を入れてChatGPTを開く <span aria-hidden="true">↗</span></button><button id="copy-prompt" class="subtle-button">依頼文をコピー</button><button id="download-prompt" class="subtle-button">.txtで保存</button></div>
         <p class="privacy-note">自動送信はしません。新しいタブで必要ならWorkを選び、入力内容を確認してから送信してください。個人情報や秘密情報を含む場合は渡す前に除いてください。</p>
         <details><summary>制作指示を確認する</summary><pre id="prompt-preview"></pre></details>
-        <div class="work-note"><h2>この画面とWork版</h2><p>Workには3案と対応画像を一度に依頼します。端末で指定した写真は自動添付されません。同じ写真を使う場合はWorkへ別途添付してください。</p></div>
+        <div class="work-note"><h2>この画面とWork版</h2><p>Workには選んだ案と対応画像だけを一度に依頼します。端末で指定した写真は自動添付されません。同じ写真を使う場合はWorkへ別途添付してください。</p></div>
       </section>
     </main>
   </div>

@@ -56,6 +56,7 @@ test("Work prompt demands immediate deliverables, no fabrication, selected desig
   project.fields.title = "試作LP";
   project.sectionNotes.cta = "ボタンを目立たせる";
   project.designs = ["trust", "premium", "creative"];
+  project.workDesigns = [0, 1, 2];
   const prompt = Core.buildWorkPrompt(project);
   assert.match(prompt, /最初の返答で/);
   assert.match(prompt, /制作前の確認質問.*不要/);
@@ -64,6 +65,32 @@ test("Work prompt demands immediate deliverables, no fabrication, selected desig
   assert.match(prompt, /ボタンを目立たせる/);
   assert.match(prompt, /プレミアム/);
   assert.match(prompt, /クリエイティブ/);
+});
+
+test("Work request includes only selected designs and keeps original slot filenames", () => {
+  const project = Core.blankProject();
+  project.designs = ["trust", "premium", "creative"];
+  project.imageDirections = ["信頼の画像", "上質な画像", "大胆な画像"];
+  project.referenceUrls = ["https://example.com/one", "https://example.com/two", "https://example.com/three"];
+  project.workDesigns = [2];
+  let prompt = Core.buildWorkPrompt(project);
+  let payload = JSON.parse(prompt.split("入力JSON:\n")[1]);
+  assert.deepEqual(payload.designs.map((design) => design.filename), ["lp-03.html"]);
+  assert.equal(payload.designs[0].imageDirection, "大胆な画像");
+  assert.doesNotMatch(prompt, /プレミアム|信頼の画像|上質な画像|example.com\/one|example.com\/two|lp-01.html|lp-02.html/);
+  project.workDesigns = [0, 2];
+  prompt = Core.buildWorkPrompt(project);
+  payload = JSON.parse(prompt.split("入力JSON:\n")[1]);
+  assert.deepEqual(payload.designs.map((design) => design.filename), ["lp-01.html", "lp-03.html"]);
+  project.workDesigns = [0, 1, 2];
+  payload = JSON.parse(Core.buildWorkPrompt(project).split("入力JSON:\n")[1]);
+  assert.equal(payload.designs.length, 3);
+});
+
+test("older saved projects default to one Work design and invalid selections cannot empty it", () => {
+  assert.deepEqual(Core.normalizeProject({ designs: ["trust", "friendly", "future"] }).workDesigns, [0]);
+  assert.deepEqual(Core.normalizeProject({ workDesigns: [2, 2, 8, "1", -1] }).workDesigns, [2]);
+  assert.deepEqual(Core.normalizeProject({ workDesigns: [] }).workDesigns, [0]);
 });
 
 test("import normalization rejects unknown design IDs and unsafe shapes", () => {
@@ -155,12 +182,13 @@ test("three design-specific image directions survive saving and enter one Work r
   project.fields.title = "絵本づくり講座";
   project.fields.offer = "親子で絵本を作る";
   project.imageDirections[1] = "親子の手元を中心に";
+  project.workDesigns = [0, 1, 2];
   const restored = Core.normalizeProject(JSON.parse(JSON.stringify(project)));
   assert.equal(restored.imageDirections[1], "親子の手元を中心に");
   const prompt = Core.buildWorkPrompt(restored);
   assert.match(prompt, /親子の手元を中心に/);
   assert.match(prompt, /絵本づくり講座/);
-  assert.match(prompt, /1回の依頼でLP完成候補3案/);
-  assert.match(prompt, /画像を3案それぞれ生成/);
+  assert.match(prompt, /選択済み3案だけを完成/);
+  assert.match(prompt, /選択した案それぞれに生成/);
   assert.equal((prompt.match(/"imageDirection":/g) || []).length, 3);
 });

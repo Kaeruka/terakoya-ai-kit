@@ -244,6 +244,26 @@
     select.value = previous || "problem";
     $("edit-content").value = Core.contentFor(project, select.value);
   }
+  function renderWorkSelection() {
+    const box = $("work-designs"); box.replaceChildren();
+    project.designs.forEach((id, index) => {
+      const label = element("label", "work-design-choice");
+      const input = document.createElement("input");
+      input.type = "checkbox"; input.checked = project.workDesigns.includes(index);
+      input.addEventListener("change", () => {
+        const next = project.workDesigns.filter((slot) => slot !== index);
+        if (input.checked) next.push(index);
+        if (!next.length) { input.checked = true; notify("完成させる案を1つ以上選んでください"); return; }
+        project.workDesigns = next.sort(); persist(); updateWorkCount(); updatePrompt();
+      });
+      const name = element("span", "", `${index + 1}案 ${Core.PRESETS[id].label}`);
+      label.append(input, name); box.append(label);
+    });
+    updateWorkCount();
+  }
+  function updateWorkCount() {
+    $("work-selection-count").textContent = `Workで完成させる案: ${project.workDesigns.length}案`;
+  }
   function updatePrompt() {
     $("prompt-preview").textContent = Core.buildWorkPrompt(project);
   }
@@ -254,14 +274,14 @@
       if (!project.imageDirections[index]) input.value = Core.imageBriefFor(project, index);
     });
     if (currentStep === "preview") { renderPreviews(); renderEdit(); }
-    if (currentStep === "work") updatePrompt();
+    if (currentStep === "work") { renderWorkSelection(); updatePrompt(); }
   }
   function go(step) {
     currentStep = step;
     document.querySelectorAll(".panel").forEach((panel) => panel.classList.toggle("active", panel.id === step));
     document.querySelectorAll(".step").forEach((button) => button.classList.toggle("active", button.dataset.step === step));
     if (step === "preview") { renderPreviews(); renderEdit(); }
-    if (step === "work") updatePrompt();
+    if (step === "work") { renderWorkSelection(); updatePrompt(); }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function sample() {
@@ -288,7 +308,7 @@
     project = next;
     persist(); renderAll(); notify("架空のサンプルを読み込みました");
   }
-  function renderAll() { renderFields(); renderSections(); renderDesigns(); if (currentStep === "preview") { renderPreviews(); renderEdit(); } if (currentStep === "work") updatePrompt(); }
+  function renderAll() { renderFields(); renderSections(); renderDesigns(); if (currentStep === "preview") { renderPreviews(); renderEdit(); } if (currentStep === "work") { renderWorkSelection(); updatePrompt(); } }
   function showSheetPreview(summary) {
     const box = $("sheet-summary"); box.replaceChildren(); box.className = "sheet-summary";
     for (const [label, value] of [["講座名", summary.title], ["対象者", summary.audience], ["日時", summary.date], ["価格", summary.price]]) {
