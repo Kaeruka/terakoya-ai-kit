@@ -313,7 +313,7 @@
   function updatePrompt() {
     $("prompt-preview").textContent = workPrompt();
   }
-  function workPrompt() { return Core.buildWorkPrompt(project, location.origin + location.pathname); }
+  function workPrompt() { return Core.buildWorkPrompt(project, location.origin + "/"); }
   function updateDynamic() {
     $("sample-banner").hidden = !project.sample;
     document.querySelectorAll("[data-image-direction]").forEach((input) => {
