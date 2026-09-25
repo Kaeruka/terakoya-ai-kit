@@ -92,11 +92,11 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const remote = Library.normalizeList(await response.json(), location.href);
       library = Library.mergeLists(library, remote, location.href);
-      saveLibrary(); renderLibrary();
+      saveLibrary(); renderLibrary(); renderHistory();
       $("library-status").textContent = `${library.length}件を表示中。Workで追加したLPはここに反映されます。`;
     } catch {
       $("library-status").textContent = "サイトの一覧に接続できません。端末に保存済みのLPを表示しています。";
-      renderLibrary();
+      renderLibrary(); renderHistory();
     }
   }
   function restoreLibrarySettings(entry) {
@@ -515,11 +515,11 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const remote = Core.normalizeAnnounceEntries(await response.json());
       announce = Core.mergeAnnounce(announce, remote);
-      saveAnnounce(); renderAnnounce();
+      saveAnnounce(); renderAnnounce(); renderHistory();
       $("announce-status").textContent = `${announce.length}件の依頼を表示中。Workで追加した告知文はここに反映されます。`;
     } catch {
       $("announce-status").textContent = "サイトの一覧に接続できません。端末に保存済みの告知文を表示しています。";
-      renderAnnounce();
+      renderAnnounce(); renderHistory();
     }
   }
   $("open-announce").addEventListener("click", () => {
@@ -555,13 +555,27 @@
     sampleItem.append(element("span", "history-name", "サンプル：商品写真ミニ講座"), element("span", "history-meta", "練習用"));
     sampleItem.addEventListener("click", () => { checkpointHistory(); sample(); });
     box.append(sampleItem);
+    const items = [];
     for (const entry of historyList) {
-      const item = element("button", "history-item");
-      item.type = "button";
-      const date = entry.updatedAt ? new Date(entry.updatedAt).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
-      item.append(element("span", "history-name", entry.name), element("span", "history-meta", `${date}　開く`));
-      item.addEventListener("click", () => openHistory(entry));
-      box.append(item);
+      items.push({ date: entry.updatedAt, name: entry.name, kind: "制作中", open: () => openHistory(entry) });
+    }
+    for (const entry of library) {
+      items.push({ date: entry.createdAt, name: entry.title, kind: "完成LP", open: () => entry.url ? window.open(entry.url, "_blank", "noopener,noreferrer") : go("library") });
+    }
+    for (const entry of announce) {
+      for (const result of entry.results) {
+        const mediaName = Core.ANNOUNCE_MEDIA.find((m) => m[0] === result.id)?.[1] || result.id;
+        items.push({ date: entry.createdAt, name: `${mediaName}の告知文`, kind: "告知文", open: () => go("announce") });
+      }
+    }
+    items.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    for (const item of items) {
+      const row = element("button", "history-item");
+      row.type = "button";
+      const date = item.date ? new Date(item.date).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+      row.append(element("span", "history-name", item.name), element("span", "history-meta", `${date}　${item.kind}`));
+      row.addEventListener("click", item.open);
+      box.append(row);
     }
   }
   function openHistory(entry) {
