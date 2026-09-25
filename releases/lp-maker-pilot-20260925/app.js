@@ -571,7 +571,16 @@
     notify("履歴から開きました");
   }
   $("save-history").addEventListener("click", () => { checkpointHistory(); notify("履歴に保存しました"); });
-  renderHistory();
+  async function refreshHistory() {
+    try {
+      const response = await fetch(`history.json?ts=${Date.now()}`, { cache: "no-store", credentials: "same-origin" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const remote = Core.normalizeHistory(await response.json());
+      historyList = Core.mergeHistory(historyList, remote);
+      saveHistory(); renderHistory();
+    } catch { renderHistory(); }
+  }
+  renderHistory(); refreshHistory();
 
   $("refresh-library").addEventListener("click", refreshLibrary);
   $("add-library-entry").addEventListener("click", () => {
@@ -582,6 +591,7 @@
     $("library-title-input").value = ""; $("library-url-input").value = ""; $("library-thumb-input").value = "";
   });
   window.addEventListener("focus", () => {
+    refreshHistory();
     if (currentStep === "library") refreshLibrary();
     if (currentStep === "announce") refreshAnnounce();
   });

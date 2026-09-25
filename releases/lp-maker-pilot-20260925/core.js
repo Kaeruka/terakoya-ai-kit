@@ -246,7 +246,8 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
       projectSettings: snapshotForLibrary(project),
       designs: selected.map((index) => ({ slot: index + 1, filename: `lp-${String(index + 1).padStart(2, "0")}.html`, id: project.designs[index], label: PRESETS[project.designs[index]].label, description: PRESETS[project.designs[index]].description, imageDirection: text(project.imageDirections[index]) || imageBriefFor(project, index), referenceUrl: validHttpUrl(project.referenceUrls[index]) })),
       imageStatus: { sharedProvided: Boolean(project.heroImage), perDesignProvided: selected.map((index) => ({ slot: index + 1, provided: Boolean(project.designImages[index]) })) },
-      completedLpLibrary: privateToolUrl ? { toolUrl: privateToolUrl, manifest: "completed-lps.json" } : null
+      completedLpLibrary: privateToolUrl ? { toolUrl: privateToolUrl, manifest: "completed-lps.json" } : null,
+      history: { id: historyIdFor(project), manifest: "history.json" }
     };
     const instructions = [
       "あなたは寺子屋AIワークショップのLP制作担当です。以下の入力JSONだけを事実の根拠にしてください。",
@@ -261,7 +262,7 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
       "個別指示を優先し、構成のautoは必要性を判断、includeは入れる、excludeは入れないでください。実績・口コミ・価格・日時・定員・割引・保証・講師情報などの事実を創作しないでください。特典案は採用前にLPへ掲載しません。",
       "申込URLがなければ無効な『受付準備中』を表示し、リンクは作りません。参考LPは特徴のみ参考にして、文章や画像を複製しません。一般公開・SNS投稿はしません。",
       privateToolUrl
-        ? "選んだLPが完成したら、入力JSONのcompletedLpLibrary.toolUrlにある本人限定Workサイトを確認し、同じサイトの completed/<一意のID>/index.html と画像素材として保存してください。既存のツール・他の完成LP・アクセス権を保ち、一般公開せず、本人限定の新バージョンとして発行してください。各LPの実画面からサムネ画像を作れる場合は同じフォルダに thumbnail.webp などで保存してください。サイト直下の completed-lps.json は既存entriesを残したまま追記し、各項目に title / design / slot / url / thumbnail（無ければ空文字）/ createdAt（ISO 8601）/ projectSettings を記録します。projectSettingsは入力JSONの同名オブジェクトをそのまま保存します。urlとthumbnailには同じサイトの永続パスを使い、期限付き画像URLは使いません。発行後にLPと一覧JSONのURLが開けることを確認してください。これでツールの『完成LP』一覧へ自動反映され、後から『この設定を編集』で素材と構成を再利用できます。画像ファイル本体はprojectSettingsに含まれないので再指定が必要です。サイト編集ができない場合は成功と装わず、完成HTMLと制約を返してください。"
+        ? "選んだLPが完成したら、入力JSONのcompletedLpLibrary.toolUrlにある本人限定Workサイトを確認し、同じサイトの completed/<一意のID>/index.html と画像素材として保存してください。既存のツール・他の完成LP・アクセス権を保ち、一般公開せず、本人限定の新バージョンとして発行してください。各LPの実画面からサムネ画像を作れる場合は同じフォルダに thumbnail.webp などで保存してください。サイト直下の completed-lps.json は既存entriesを残したまま追記し、各項目に title / design / slot / url / thumbnail（無ければ空文字）/ createdAt（ISO 8601）/ projectSettings を記録します。projectSettingsは入力JSONの同名オブジェクトをそのまま保存します。urlとthumbnailには同じサイトの永続パスを使い、期限付き画像URLは使いません。発行後にLPと一覧JSONのURLが開けることを確認してください。これでツールの『完成LP』一覧へ自動反映され、後から『この設定を編集』で素材と構成を再利用できます。画像ファイル本体はprojectSettingsに含まれないので再指定が必要です。あわせて history.json（無ければ『{ entries: [] }』を作成）の entries に『{ id: 入力JSONのhistory.id, name: projectSettings.fields.titleまたは「無題の制作」, updatedAt: ISO 8601, project: 入力JSONのprojectSettings }』を追記してください。同じidがあれば上書きし、既存entriesを消さず、新しい順で全体を100件以内に保ちます。サイト編集ができない場合は成功と装わず、完成HTMLと制約を返してください。"
         : "現在のツールはローカル表示です。Workから端末内の一覧へ自動書き込みはできません。完成LPのURLと、あればサムネ画像のURLを返してください。ツールの『完成LP』で登録すると現在の制作設定を端末に保存できます。",
       "選択した案のHTMLのほか、要確認事項を短く添えてください。設計意図や素材案だけで回答を終えず、まず成果物を完成させてください。"
     ];
@@ -282,7 +283,8 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
       media: mediaIds,
       mediaNames,
       projectSettings: snapshotForLibrary(project),
-      announceLibrary: privateToolUrl ? { toolUrl: privateToolUrl, manifest: "announcements.json" } : null
+      announceLibrary: privateToolUrl ? { toolUrl: privateToolUrl, manifest: "announcements.json" } : null,
+      history: { id: historyIdFor(project), manifest: "history.json" }
     };
     const instructions = [
       "あなたは寺子屋AIワークショップの告知物制作担当です。以下の入力JSONだけを事実の根拠にしてください。",
@@ -291,7 +293,7 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
       "媒体ごとにその媒体らしい文体と長さにしてください。キャッチコピーは対象者・持ち帰り物・取り組み方の異なる角度の3案にします。「未来を変える」のような汎用表現は具体語に置き換えます。",
       `各媒体の結果は {"requestId":"${requestId}","results":[{"id":"<mediaのid>","text":"本文","warnings":[],"review":{"version":"TERAKOYA-CREATIVE-04","decisions":[],"changes":[],"checks":[],"unverified":[]}}]} の形にしてください。warningsには未解決の不足・矛盾・確認事項を入れ、reviewには実際の判断・修正・確認・未検証を記録してください。見ていない表示を合格と断定しません。`,
       privateToolUrl
-        ? `完成したら、入力JSONのannounceLibrary.toolUrlにある本人限定サイトを確認し、結果JSONを announce/${requestId}.json として保存し、サイト直下の announcements.json（無ければ {"entries":[]} を作成）の entries に {"requestId":"${requestId}","createdAt":"<ISO 8601>","results":[<結果>]} を追記してください。既存のentries・完成LP・ツールを壊さず、本人限定の新バージョンとして発行し、発行後にURLが開けることを確認してください。サイト編集ができない場合は成功と装わず、結果JSONをコードブロックで返してください。`
+        ? `完成したら、入力JSONのannounceLibrary.toolUrlにある本人限定サイトを確認し、結果JSONを announce/${requestId}.json として保存し、サイト直下の announcements.json（無ければ {"entries":[]} を作成）の entries に {"requestId":"${requestId}","createdAt":"<ISO 8601>","results":[<結果>]} を追記してください。既存のentries・完成LP・ツールを壊さず、本人限定の新バージョンとして発行し、発行後にURLが開けることを確認してください。あわせて history.json（無ければ {"entries":[]} を作成）の entries に {"id":入力JSONのhistory.id,"name":projectSettings.fields.titleまたは『無題の制作』,"updatedAt":"<ISO 8601>","project":<入力JSONのprojectSettings>} を追記してください。同じidがあれば上書きし、既存entriesを消さず、新しい順で全体を100件以内に保ちます。サイト編集ができない場合は成功と装わず、結果JSONをコードブロックで返してください。`
         : "現在のツールはローカル表示です。結果JSONをコードブロックで返してください。",
       "設計意図の説明だけで終えず、まず成果物を完成させてください。結果JSONのあとに要確認事項を短く添えてください。"
     ];
@@ -319,6 +321,12 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
   }
 
   const HISTORY_LIMIT = 100;
+  function historyIdFor(rawProject) {
+    const fingerprint = JSON.stringify(snapshotForLibrary(rawProject));
+    let hash = 0;
+    for (let i = 0; i < fingerprint.length; i++) hash = (hash * 31 + fingerprint.charCodeAt(i)) >>> 0;
+    return `h-${hash.toString(36)}`;
+  }
   function normalizeHistory(value) {
     const entries = Array.isArray(value) ? value : [];
     return entries.slice(0, 300).map((entry) => ({
@@ -335,15 +343,25 @@ body[data-design="connection"] .hero{grid-template-columns:.95fr 1.05fr;gap:50px
     const snapshot = snapshotForLibrary(project);
     const fingerprint = JSON.stringify(snapshot);
     const entry = {
-      id: `h-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      id: historyIdFor(project),
       name: text(project.fields.title) || "無題の制作",
       updatedAt: new Date().toISOString(),
       sample: project.sample,
       project: snapshot
     };
-    const rest = (Array.isArray(list) ? list : []).filter((e) => JSON.stringify(e.project) !== fingerprint);
+    const rest = (Array.isArray(list) ? list : []).filter((e) => e.id !== entry.id && JSON.stringify(e.project) !== fingerprint);
     return [entry, ...rest].slice(0, HISTORY_LIMIT);
   }
 
-  return { FIELD_KEYS, SECTIONS, PRESETS, ANNOUNCE_MEDIA, HISTORY_LIMIT, blankProject, normalizeProject, snapshotForLibrary, buildConsultPrompt, applyConsultFields, imageBriefFor, validHttpUrl, issues, buildHtml, buildWorkPrompt, buildAnnouncePrompt, normalizeAnnounceEntries, mergeAnnounce, normalizeHistory, pushHistory, contentFor };
+  function mergeHistory(local, remote) {
+    const byId = new Map();
+    for (const entry of [...(local || []), ...(remote || [])]) {
+      if (!entry || !entry.id) continue;
+      const prev = byId.get(entry.id);
+      if (!prev || (entry.updatedAt || "") >= (prev.updatedAt || "")) byId.set(entry.id, entry);
+    }
+    return [...byId.values()].sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || "")).slice(0, HISTORY_LIMIT);
+  }
+
+  return { FIELD_KEYS, SECTIONS, PRESETS, ANNOUNCE_MEDIA, HISTORY_LIMIT, blankProject, normalizeProject, snapshotForLibrary, buildConsultPrompt, applyConsultFields, imageBriefFor, validHttpUrl, issues, buildHtml, buildWorkPrompt, buildAnnouncePrompt, normalizeAnnounceEntries, mergeAnnounce, normalizeHistory, pushHistory, mergeHistory, historyIdFor, contentFor };
 });

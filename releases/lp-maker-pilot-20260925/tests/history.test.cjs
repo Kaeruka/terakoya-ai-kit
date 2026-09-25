@@ -59,3 +59,24 @@ test("history snapshots strip image data", () => {
   const list = Core.pushHistory([], project);
   assert.equal(list[0].project.heroImage, "");
 });
+
+test("historyIdFor is deterministic for identical content", () => {
+  assert.equal(Core.historyIdFor(projectWith("同じ講座")), Core.historyIdFor(projectWith("同じ講座")));
+  assert.notEqual(Core.historyIdFor(projectWith("同じ講座")), Core.historyIdFor(projectWith("別の講座")));
+});
+
+test("mergeHistory dedupes by id and keeps newest first", () => {
+  const local = Core.normalizeHistory([
+    { id: "h-1", name: "古い", updatedAt: "2026-09-20T00:00:00Z", project: projectWith("古い") },
+    { id: "h-2", name: "ローカルだけ", updatedAt: "2026-09-25T00:00:00Z", project: projectWith("ローカル") }
+  ]);
+  const remote = Core.normalizeHistory([
+    { id: "h-1", name: "古い", updatedAt: "2026-09-24T00:00:00Z", project: projectWith("古い") },
+    { id: "h-9", name: "サイト側だけ", updatedAt: "2026-09-23T00:00:00Z", project: projectWith("サイト") }
+  ]);
+  const merged = Core.mergeHistory(local, remote);
+  assert.equal(merged.length, 3);
+  assert.equal(merged[0].id, "h-2");
+  assert.equal(merged[1].updatedAt, "2026-09-24T00:00:00.000Z");
+  assert.equal(merged[2].id, "h-9");
+});
