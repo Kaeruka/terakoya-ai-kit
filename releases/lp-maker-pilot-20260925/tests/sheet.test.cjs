@@ -40,15 +40,15 @@ test("legacy sheet maps facts and keeps fictional status and unknowns", () => {
   assert.equal(summary.sample, true);
   assert.ok(project.pending.some((item) => item.includes("申込URL")));
   assert.ok(project.pending.some((item) => item.includes("講師")));
-  assert.ok(project.pending.some((item) => item.includes("架空")));
+  assert.ok(!project.pending.some((item) => item.includes("架空")));
   assert.deepEqual(project.extraSections.find((item) => item.title === "定員"), { title: "定員", content: "6名" });
 });
 
-test("all three generated LPs retain the fiction label and no invented application link", () => {
+test("legacy sample data no longer adds a visible label or invented application link", () => {
   const { project } = Sheet.parseLegacySheet(fixture);
   for (const id of project.designs) {
     const html = Core.buildHtml(project, id);
-    assert.match(html, /テスト用・架空情報/);
+    assert.doesNotMatch(html, /テスト用・架空情報/);
     assert.match(html, /3,000円/);
     assert.match(html, /aria-disabled="true"/);
     assert.match(html, /［申込URL：未定］/);
@@ -69,7 +69,7 @@ test("Work request proceeds without confirmation questions for fictional sample"
   const { project } = Sheet.parseLegacySheet(fixture);
   const prompt = Core.buildWorkPrompt(project);
   assert.match(prompt, /制作前の確認質問や構成案だけの返答は不要/);
-  assert.match(prompt, /テスト用・架空情報/);
+  assert.doesNotMatch(prompt, /テスト用・架空情報/);
   assert.match(prompt, /講師欄・録画配布・キャンセル条件.*掲載しません/);
   assert.match(prompt, /最初の返答で/);
   assert.match(prompt, /lp-01\.html/);

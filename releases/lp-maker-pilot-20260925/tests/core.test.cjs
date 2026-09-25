@@ -77,7 +77,9 @@ test("Work request includes only selected designs and keeps original slot filena
   let payload = JSON.parse(prompt.split("入力JSON:\n")[1]);
   assert.deepEqual(payload.designs.map((design) => design.filename), ["lp-03.html"]);
   assert.equal(payload.designs[0].imageDirection, "大胆な画像");
-  assert.doesNotMatch(prompt, /プレミアム|信頼の画像|上質な画像|example.com\/one|example.com\/two|lp-01.html|lp-02.html/);
+  assert.equal(payload.projectSettings.designs.length, 3);
+  assert.equal(payload.designs.length, 1);
+  assert.doesNotMatch(payload.designs[0].referenceUrl, /example.com\/one|example.com\/two/);
   project.workDesigns = [0, 2];
   prompt = Core.buildWorkPrompt(project);
   payload = JSON.parse(prompt.split("入力JSON:\n")[1]);
@@ -174,7 +176,33 @@ test("missing photo uses only an image placeholder, including sample projects", 
   const html = Core.buildHtml(project, "trust");
   assert.match(html, /class="lp-cover placeholder"><span>画像<\/span>/);
   assert.doesNotMatch(html, /data:image\/webp;base64/);
-  assert.match(html, /テスト用・架空情報/);
+  assert.doesNotMatch(html, /テスト用・架空情報/);
+});
+
+test("consultation fills only known fields and preserves existing input", () => {
+  const project = Core.blankProject();
+  project.fields.title = "既存タイトル";
+  project.edits.problem = "古い修正";
+  const result = Core.applyConsultFields(project, { fields: { title: "新タイトル", audience: "小規模事業者", problem: "時間が足りない", applicationUrl: "javascript:bad", unknown: "無視" } });
+  assert.equal(result.applied, 2);
+  assert.equal(result.project.fields.title, "既存タイトル");
+  assert.equal(result.project.fields.audience, "小規模事業者");
+  assert.equal(result.project.fields.applicationUrl, "");
+  assert.equal(result.project.edits.problem, undefined);
+  assert.equal(Core.applyConsultFields(result.project, { fields: { title: "変更後" } }, true).project.fields.title, "変更後");
+});
+
+test("saved settings retain copy and design choices but omit image bytes", () => {
+  const project = Core.blankProject();
+  project.fields.title = "編集用";
+  project.designs[1] = "premium";
+  project.heroImage = "data:image/webp;base64,QUJD";
+  const settings = Core.snapshotForLibrary(project);
+  assert.equal(settings.fields.title, "編集用");
+  assert.equal(settings.designs[1], "premium");
+  assert.equal(settings.heroImage, "");
+  assert.deepEqual(settings.designImages, ["", "", ""]);
+  assert.match(Core.buildWorkPrompt(project, "https://example.chatgpt.site/"), /projectSettings.*そのまま保存/);
 });
 
 test("three design-specific image directions survive saving and enter one Work request", () => {

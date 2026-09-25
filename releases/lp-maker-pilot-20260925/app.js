@@ -32,7 +32,6 @@
   let library = [];
   try { library = Library.normalizeList(JSON.parse(localStorage.getItem(LIBRARY_KEY) || "[]"), location.href); }
   catch { library = []; }
-  let stagedSheet = null;
   let toastTimer;
   const $ = (id) => document.getElementById(id);
 
@@ -75,8 +74,15 @@
       } else image.textContent = "画像なし";
       const body = element("div", "library-card-body");
       body.append(element("h2", "", entry.title), element("p", "", [entry.design, entry.createdAt.slice(0, 10)].filter(Boolean).join(" · ")));
+      const actions = element("div", "library-card-actions");
       const link = element("a", "", "LPを開く ↗"); link.href = entry.url; link.target = "_blank"; link.rel = "noopener noreferrer";
-      body.append(link); card.append(image, body); box.append(card);
+      actions.append(link);
+      if (entry.projectSettings) {
+        const edit = element("button", "subtle-button", "この設定を編集"); edit.type = "button";
+        edit.addEventListener("click", () => restoreLibrarySettings(entry));
+        actions.append(edit);
+      }
+      body.append(actions); card.append(image, body); box.append(card);
     }
   }
   async function refreshLibrary() {
@@ -92,6 +98,13 @@
       $("library-status").textContent = "サイトの一覧に接続できません。端末に保存済みのLPを表示しています。";
       renderLibrary();
     }
+  }
+  function restoreLibrarySettings(entry) {
+    if (Object.values(project.fields).some((value) => value.trim()) && !confirm("現在の入力を、保存した制作設定に切り替えますか？")) return;
+    project = Core.normalizeProject(entry.projectSettings);
+    if (entry.slot) project.workDesigns = [entry.slot - 1];
+    persist(); renderAll(); go("info");
+    notify("制作設定を開きました。元のLPはそのまま残ります");
   }
   function element(tag, className, text) {
     const el = document.createElement(tag);
@@ -136,7 +149,6 @@
     $("bonus-mode").value = project.bonusMode;
     $("bonus-idea-count").value = String(project.bonusIdeaCount);
     $("bonus-count-label").hidden = project.bonusMode !== "ideas";
-    $("sample-banner").hidden = !project.sample;
     $("hero-thumb").hidden = !project.heroImage;
     $("remove-hero").hidden = !project.heroImage;
     if (project.heroImage) $("hero-thumb").src = project.heroImage;
@@ -315,7 +327,6 @@
   }
   function workPrompt() { return Core.buildWorkPrompt(project, location.origin + "/"); }
   function updateDynamic() {
-    $("sample-banner").hidden = !project.sample;
     document.querySelectorAll("[data-image-direction]").forEach((input) => {
       const index = Number(input.dataset.imageDirection);
       if (!project.imageDirections[index]) input.value = Core.imageBriefFor(project, index);
@@ -340,31 +351,42 @@
       outcome: "自分で撮影した商品写真1枚と、撮影手順のチェックリスト",
       offer: "自分の商品をスマートフォンで撮るときの光の使い方と背景の整え方を学び、講座中に商品写真を1枚撮影します。",
       details: "窓の近くでの光の使い方、身近な物で作る背景、撮影実習、参加者の写真への簡単なフィードバック。",
-      date: "2026年10月18日 13:00〜14:30（日本時間）", place: "オンライン（会議サービスと参加リンクは未定）",
-      price: "3,000円（税込）", application: "受付準備中",
+      place: "オンライン", application: "受付準備中",
       faq: "専用カメラは必要ですか？\n不要です。",
       notes: "初心者が安心できる、丁寧で堅すぎない文章。成果保証はしない。残席数は不明。"
     });
     next.sections.faq = "include";
     next.extraSections = [
-      { title: "定員", content: "6名" },
       { title: "持ち物", content: "スマートフォン、撮影する商品1点、白い紙または白い布" },
-      { title: "申込締切", content: "2026年10月15日" }
     ];
-    next.pending = ["申込URLが未定です", "主催者・講師は未設定です", "録画配布とキャンセル条件が未定です", "日時・料金・定員を含め、元シートはすべて架空です"];
+    next.pending = ["申込URLが未定です", "主催者・講師は未設定です"];
     next.sample = true;
     project = next;
-    persist(); renderAll(); notify("架空のサンプルを読み込みました");
+    persist(); renderAll(); notify("サンプルを読み込みました");
   }
   function renderAll() { renderFields(); renderSections(); renderDesigns(); if (currentStep === "preview") { renderPreviews(); renderEdit(); } if (currentStep === "work") { renderWorkSelection(); updatePrompt(); } }
-  function showSheetPreview(summary) {
-    const box = $("sheet-summary"); box.replaceChildren(); box.className = "sheet-summary";
-    for (const [label, value] of [["講座名", summary.title], ["対象者", summary.audience], ["日時", summary.date], ["価格", summary.price]]) {
-      const item = element("p"); item.append(element("strong", "", label), document.createTextNode(value)); box.append(item);
-    }
-    if (summary.sample) box.append(element("p", "warning", "このシートはすべて架空の検証用データです。テスト表示を残して反映します。"));
-    summary.pending.forEach((message) => box.append(element("p", "warning", `要確認: ${message}`)));
-    $("sheet-preview").hidden = false;
+  function parseConsultAnswer(value) {
+    if (value.length > 200_000) throw new Error("回答が長すぎます");
+    const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(value);
+    return JSON.parse((fenced ? fenced[1] : value).trim());
+  }
+  function applyConsultAnswer(answer, overwrite = false) {
+    const result = Core.applyConsultFields(project, answer, overwrite);
+    if (!result.applied) return notify("反映できる入力案がありませんでした");
+    project = result.project;
+    persist(); renderAll(); $("consult-panel").hidden = true; go("info");
+    notify(`${result.applied}項目を反映しました`);
+  }
+  function receiveConsultLink() {
+    if (!location.hash.startsWith("#lp-intake=")) return;
+    const encoded = location.hash.slice("#lp-intake=".length);
+    try { history.replaceState(null, "", location.pathname + location.search); } catch { /* File URLs may refuse history changes. */ }
+    try {
+      if (!/^[A-Za-z0-9_-]{1,40000}$/.test(encoded)) throw new Error("入力案のリンクが無効です");
+      const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      applyConsultAnswer(JSON.parse(new TextDecoder().decode(bytes)));
+    } catch { notify("入力案のリンクを読み込めませんでした。JSONを貼り付けてください"); }
   }
   function openWithPrompt(prompt) {
     const link = `https://chatgpt.com/?prompt=${encodeURIComponent(prompt)}`;
@@ -377,26 +399,15 @@
   document.querySelectorAll(".step").forEach((button) => button.addEventListener("click", () => go(button.dataset.step)));
   document.querySelectorAll(".next-step").forEach((button) => button.addEventListener("click", () => go(button.dataset.next)));
   $("load-sample").addEventListener("click", () => { if (Object.values(project.fields).some((v) => v.trim()) && !confirm("今の入力をサンプルに置き換えますか？ .jsonで保存しておくと戻せます。")) return; sample(); });
-  $("import-sheet").addEventListener("click", () => $("sheet-file").click());
-  $("sheet-file").addEventListener("change", async (event) => {
-    const file = event.target.files?.[0]; if (!file) return;
-    try {
-      if (file.size > 100_000) throw new Error("シートは100KB以下にしてください");
-      stagedSheet = window.LpSheet.parseLegacySheet(await file.text());
-      showSheetPreview(stagedSheet.summary);
-      $("sheet-preview").scrollIntoView({ behavior: "smooth", block: "start" });
-    } catch (error) { stagedSheet = null; $("sheet-preview").hidden = true; notify(error.message || "シートを読み込めませんでした"); }
-    finally { event.target.value = ""; }
+  $("consult").addEventListener("click", () => {
+    $("consult-panel").hidden = false;
+    openWithPrompt(Core.buildConsultPrompt(project, location.origin + "/"));
   });
-  $("apply-sheet").addEventListener("click", () => {
-    if (!stagedSheet) return;
-    if (Object.values(project.fields).some((value) => value.trim()) && !confirm("現在の入力をシートの内容で置き換えますか？ 必要なら先に制作データを保存してください。")) return;
-    stagedSheet.project.designs = project.designs.slice();
-    project = stagedSheet.project;
-    stagedSheet = null; $("sheet-preview").hidden = true;
-    persist(); renderAll(); notify(project.sample ? "架空の検証用シートを反映しました" : "シートを反映しました");
+  $("apply-consult").addEventListener("click", () => {
+    try { applyConsultAnswer(parseConsultAnswer($("consult-answer").value), $("consult-overwrite").checked); }
+    catch (error) { notify(error.message || "入力案を読み込めませんでした"); }
   });
-  $("cancel-sheet").addEventListener("click", () => { stagedSheet = null; $("sheet-preview").hidden = true; });
+  $("close-consult").addEventListener("click", () => { $("consult-panel").hidden = true; });
   $("new-project").addEventListener("click", () => {
     if (Object.values(project.fields).some((v) => v.trim()) && !confirm("新しい案件を始めますか？ 現在の入力はこの端末から置き換わります。.jsonで保存しておくと戻せます。")) return;
     project = Core.blankProject(); persist(); renderAll(); go("info"); notify("新しい案件を始めました");
@@ -438,7 +449,7 @@
   $("download-prompt").addEventListener("click", () => download("lp-work-request.txt", workPrompt(), "text/plain;charset=utf-8"));
   $("refresh-library").addEventListener("click", refreshLibrary);
   $("add-library-entry").addEventListener("click", () => {
-    const entry = Library.normalizeEntry({ title: $("library-title-input").value, url: $("library-url-input").value, thumbnail: $("library-thumb-input").value, createdAt: new Date().toISOString() }, location.href);
+    const entry = Library.normalizeEntry({ title: $("library-title-input").value, url: $("library-url-input").value, thumbnail: $("library-thumb-input").value, projectSettings: Core.snapshotForLibrary(project), createdAt: new Date().toISOString() }, location.href);
     if (!entry) return notify("https:// の完成LPリンクを入力してください");
     library = Library.mergeLists(library, [entry], location.href);
     saveLibrary(); renderLibrary(); notify("完成LPに追加しました");
@@ -447,5 +458,6 @@
   window.addEventListener("focus", () => { if (currentStep === "library") refreshLibrary(); });
 
   renderAll();
+  receiveConsultLink();
   refreshLibrary();
 })();

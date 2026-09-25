@@ -16,6 +16,8 @@
 .library-card h2 { font-size: 16px; margin: 0 0 5px; overflow-wrap: anywhere; }
 .library-card p { font-size: 12px; color: #61747a; margin: 0 0 12px; }
 .library-card a { display: inline-block; color: #086c7e; font-weight: 700; }
+.library-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.library-card-actions button { min-height: 34px; padding: 5px 10px; font-size: 12px; }
 .library-empty { padding: 42px 20px; color: #61747a; border: 1px dashed #b4ccd0; text-align: center; }
 .library-register-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 8px 0; }
 .library-register-fields button { align-self: end; }
@@ -27,12 +29,12 @@
 
 .head-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 
-.sheet-preview { border: 1px solid #95b8c0; border-left: 4px solid #168195; background: #edf6f7; padding: 20px; margin-bottom: 24px; }
-.sheet-preview p:last-of-type { color: #536e75; font-size: 13px; }
-.sheet-summary { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px 20px; margin: 13px 0; }
-.sheet-summary p { margin: 0; overflow-wrap: anywhere; }
-.sheet-summary strong { display: block; font-size: 12px; }
-.sheet-summary .warning { grid-column: 1 / -1; color: #965227; font-weight: 700; }
+.consult-panel { border: 1px solid #95b8c0; border-left: 4px solid #168195; background: #edf6f7; padding: 20px; margin-bottom: 24px; max-width: 800px; }
+.consult-panel[hidden] { display: none; }
+.consult-panel p { color: #536e75; font-size: 13px; }
+.consult-panel textarea { width: 100%; margin-bottom: 12px; }
+.consult-overwrite { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.consult-overwrite input { width: 16px; height: 16px; }
 
 .more-fields { margin-top: 16px; padding: 0; overflow: hidden; }
 .more-fields summary { padding: 14px 17px; color: #16566a; }
@@ -75,7 +77,6 @@
   .work-designs { grid-template-columns: 1fr; }
   .header-new { font-size: 11px; padding: 7px; }
   .head-actions { justify-content: flex-start; }
-  .sheet-summary { grid-template-columns: 1fr; }
   .bonus-control { grid-template-columns: 1fr; }
   .app-header { padding: 0 10px; }
 }

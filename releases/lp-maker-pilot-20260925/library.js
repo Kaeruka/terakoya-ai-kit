@@ -21,7 +21,15 @@
     const design = String(value.design || "").trim().slice(0, 60);
     const thumbnail = value.thumbnail ? safeUrl(value.thumbnail, base) : "";
     const createdAt = Number.isFinite(Date.parse(value.createdAt)) ? new Date(value.createdAt).toISOString() : new Date().toISOString();
-    return { id: url, title, design, url, thumbnail, createdAt };
+    const slot = Number.isInteger(value.slot) && value.slot >= 1 && value.slot <= 3 ? value.slot : null;
+    let projectSettings = null;
+    try {
+      const serialized = JSON.stringify(value.projectSettings);
+      if (serialized && serialized.length < 100_000 && value.projectSettings?.fields && Array.isArray(value.projectSettings?.designs)) {
+        projectSettings = JSON.parse(serialized);
+      }
+    } catch { /* Invalid settings do not hide an otherwise valid LP. */ }
+    return { id: url, title, design, slot, url, thumbnail, createdAt, projectSettings };
   }
 
   function normalizeList(value, base) {
@@ -36,7 +44,12 @@
   }
 
   function mergeLists(local, remote, base) {
-    return normalizeList([...normalizeList(local, base), ...normalizeList(remote, base)], base);
+    const byUrl = new Map(normalizeList(local, base).map((entry) => [entry.url, entry]));
+    for (const entry of normalizeList(remote, base)) {
+      const previous = byUrl.get(entry.url);
+      byUrl.set(entry.url, { ...entry, projectSettings: entry.projectSettings || previous?.projectSettings || null, slot: entry.slot || previous?.slot || null });
+    }
+    return [...byUrl.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   return { safeUrl, normalizeEntry, normalizeList, mergeLists };

@@ -14,11 +14,13 @@ test("completed LP entries resolve private site paths and reject unsafe links", 
 });
 
 test("completed LP list merges without duplicate links", () => {
-  const local = [{ title: "旧", url: "completed/a/index.html" }];
+  const settings = Core.snapshotForLibrary({ fields: { title: "保存した設定" } });
+  const local = [{ title: "旧", url: "completed/a/index.html", projectSettings: settings }];
   const remote = { entries: [{ title: "更新", url: "completed/a/index.html" }, { title: "追加", url: "completed/b/index.html" }] };
   const merged = Library.mergeLists(local, remote, base);
   assert.equal(merged.length, 2);
   assert.equal(merged.find((entry) => entry.url.endsWith("/a/index.html")).title, "更新");
+  assert.equal(merged.find((entry) => entry.url.endsWith("/a/index.html")).projectSettings.fields.title, "保存した設定");
 });
 
 test("Work request includes private library only for a private Sites URL", () => {
