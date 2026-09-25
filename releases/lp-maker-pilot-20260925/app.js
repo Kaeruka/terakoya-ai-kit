@@ -448,7 +448,7 @@
   });
   $("download-prompt").addEventListener("click", () => download("lp-work-request.txt", workPrompt(), "text/plain;charset=utf-8"));
 
-  // ---------- 履歴・制作一覧（左サイドバー下部） ----------
+  // ---------- 履歴・制作一覧（左サイドバー） ----------
   const HISTORY_KEY = "lp-history-v1";
   let historyList = [];
   try { historyList = Core.normalizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")); }
