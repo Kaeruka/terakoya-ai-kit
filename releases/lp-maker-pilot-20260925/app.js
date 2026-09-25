@@ -466,7 +466,9 @@
     const box = $("history-list"); box.replaceChildren();
     const sampleItem = element("button", "history-item sample-entry");
     sampleItem.type = "button";
-    sampleItem.append(element("span", "history-name", "サンプル：商品写真ミニ講座"), element("span", "history-meta", "練習用"));
+    const sampleText = element("span", "history-text");
+    sampleText.append(element("span", "history-name", "サンプル：商品写真ミニ講座"), element("span", "history-meta", "練習用"));
+    sampleItem.append(element("span", "history-dot"), sampleText);
     sampleItem.addEventListener("click", () => { checkpointHistory(); sample(); });
     box.append(sampleItem);
     const items = [];
@@ -478,10 +480,12 @@
     }
     items.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     for (const item of items) {
-      const row = element("button", "history-item");
+      const row = element("button", `history-item kind-${item.kind === "完成LP" ? "done" : "wip"}`);
       row.type = "button";
       const date = item.date ? new Date(item.date).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
-      row.append(element("span", "history-name", item.name), element("span", "history-meta", `${date}　${item.kind}`));
+      const text = element("span", "history-text");
+      text.append(element("span", "history-name", item.name), element("span", "history-meta", `${item.kind}${date ? "　" + date : ""}`));
+      row.append(element("span", "history-dot"), text);
       row.addEventListener("click", item.open);
       box.append(row);
     }
