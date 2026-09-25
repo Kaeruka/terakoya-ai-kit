@@ -1,0 +1,55 @@
+.bonus-control {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr);
+  gap: 16px;
+  max-width: 850px;
+  margin-top: 23px;
+}
+
+.bonus-control [hidden] { display: none; }
+
+.header-new { min-height: 38px; white-space: nowrap; }
+
+.head-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+.sheet-preview { border: 1px solid #95b8c0; border-left: 4px solid #168195; background: #edf6f7; padding: 20px; margin-bottom: 24px; }
+.sheet-preview p:last-of-type { color: #536e75; font-size: 13px; }
+.sheet-summary { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px 20px; margin: 13px 0; }
+.sheet-summary p { margin: 0; overflow-wrap: anywhere; }
+.sheet-summary strong { display: block; font-size: 12px; }
+.sheet-summary .warning { grid-column: 1 / -1; color: #965227; font-weight: 700; }
+
+.more-fields { margin-top: 16px; padding: 0; overflow: hidden; }
+.more-fields summary { padding: 14px 17px; color: #16566a; }
+.more-fields[open] summary { border-bottom: 1px solid #dce7e9; }
+.more-fields .form-grid { padding: 18px; }
+.more-fields .bonus-control { margin: 0 18px 18px; }
+.local-image { padding: 18px 18px 0; }
+.local-image p { font-size: 12px; color: #60737a; margin: 5px 0 10px; }
+.local-image img { display: block; width: min(320px,100%); max-height: 180px; object-fit: cover; margin: 10px 0; border-radius: 4px; }
+.local-image img[hidden], .local-image button[hidden] { display: none; }
+.design-photo { display: grid; gap: 6px; margin-top: 10px; font-size: 12px; font-weight: 700; color: #36535b; }
+.design-photo input { width: 100%; font-size: 11px; }
+.design-thumb { display: block; width: 100%; height: 80px; object-fit: cover; margin-top: 8px; border-radius: 3px; }
+.preview-frame { position: relative; }
+.preview-frame iframe { position: absolute; left: 0; top: 0; width: 960px; height: 1600px; transform-origin: top left; }
+.issue-details { max-width: 760px; margin: 0 0 20px; padding: 10px 14px; background: #fff9ef; border-color: #ead6b1; }
+.issue-details summary { color: #74521e; }
+.issue-details p { margin: 8px 0 0; font-size: 13px; }
+
+@media (max-width: 900px) {
+  .app-shell { display: block; }
+  .steps { flex-direction: row; overflow-x: auto; padding: 7px; }
+  .step { white-space: nowrap; font-size: 12px; padding: 9px; }
+  .steps-foot { display: none; }
+  .form-grid { grid-template-columns: 1fr; }
+  .field-wide { grid-column: auto; }
+}
+
+@media (max-width: 560px) {
+  .header-new { font-size: 11px; padding: 7px; }
+  .head-actions { justify-content: flex-start; }
+  .sheet-summary { grid-template-columns: 1fr; }
+  .bonus-control { grid-template-columns: 1fr; }
+  .app-header { padding: 0 10px; }
+}

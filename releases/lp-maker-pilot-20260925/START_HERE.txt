@@ -1,0 +1,2 @@
+寺子屋AIのLP制作ツールを作ります。次の固定版の制作指示を読み、そこにあるファイルをそのまま使って動くツールを完成させてください。説明だけで終わらず、開ける成果物と確認結果を返してください。
+https://raw.githubusercontent.com/kaerukadate1/terakoya-ai-kit/pilot/lp-maker-20260925/releases/lp-maker-pilot-20260925/WORKSHOP_PROMPT.md
