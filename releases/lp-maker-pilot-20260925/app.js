@@ -1,7 +1,9 @@
 (function () {
   "use strict";
   const Core = window.LpCore;
+  const Library = window.LpLibrary;
   const KEY = "terakoya-lp-maker-v1";
+  const LIBRARY_KEY = "terakoya-lp-maker-library-v1";
   const FIELD_INFO = [
     ["title", "商品・セミナー名", "何を案内しますか？", true],
     ["purpose", "LPの目的", "例：セミナーへの参加申込み", false],
@@ -27,6 +29,9 @@
   try { project = Core.normalizeProject(JSON.parse(localStorage.getItem(KEY) || "null")); }
   catch { project = Core.blankProject(); }
   let currentStep = "info";
+  let library = [];
+  try { library = Library.normalizeList(JSON.parse(localStorage.getItem(LIBRARY_KEY) || "[]"), location.href); }
+  catch { library = []; }
   let stagedSheet = null;
   let toastTimer;
   const $ = (id) => document.getElementById(id);
@@ -45,6 +50,47 @@
     } catch {
       $("save-status").textContent = "保存できませんでした";
       notify("端末への保存に失敗しました。.jsonでも保存してください。");
+    }
+  }
+  function saveLibrary() {
+    try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(library)); }
+    catch { notify("一覧の端末保存に失敗しました"); }
+  }
+  function renderLibrary() {
+    const box = $("library-grid"); box.replaceChildren();
+    if (!library.length) {
+      box.append(element("p", "library-empty", "完成したLPはまだありません。Workで制作するとここに並びます。"));
+      return;
+    }
+    for (const entry of library) {
+      const card = element("article", "library-card");
+      const image = element("div", "library-image");
+      if (entry.thumbnail) {
+        const img = document.createElement("img"); img.src = entry.thumbnail; img.alt = `${entry.title}のサムネイル`; img.loading = "lazy";
+        img.onerror = () => { img.remove(); image.textContent = "画像なし"; };
+        image.append(img);
+      } else if (new URL(entry.url).origin === location.origin) {
+        const frame = document.createElement("iframe"); frame.src = entry.url; frame.title = `${entry.title}のプレビュー`; frame.loading = "lazy"; frame.tabIndex = -1;
+        image.append(frame);
+      } else image.textContent = "画像なし";
+      const body = element("div", "library-card-body");
+      body.append(element("h2", "", entry.title), element("p", "", [entry.design, entry.createdAt.slice(0, 10)].filter(Boolean).join(" · ")));
+      const link = element("a", "", "LPを開く ↗"); link.href = entry.url; link.target = "_blank"; link.rel = "noopener noreferrer";
+      body.append(link); card.append(image, body); box.append(card);
+    }
+  }
+  async function refreshLibrary() {
+    $("library-status").textContent = "一覧を確認中…";
+    try {
+      const response = await fetch(`completed-lps.json?ts=${Date.now()}`, { cache: "no-store", credentials: "same-origin" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const remote = Library.normalizeList(await response.json(), location.href);
+      library = Library.mergeLists(library, remote, location.href);
+      saveLibrary(); renderLibrary();
+      $("library-status").textContent = `${library.length}件を表示中。Workで追加したLPはここに反映されます。`;
+    } catch {
+      $("library-status").textContent = "サイトの一覧に接続できません。端末に保存済みのLPを表示しています。";
+      renderLibrary();
     }
   }
   function element(tag, className, text) {
@@ -265,8 +311,9 @@
     $("work-selection-count").textContent = `Workで完成させる案: ${project.workDesigns.length}案`;
   }
   function updatePrompt() {
-    $("prompt-preview").textContent = Core.buildWorkPrompt(project);
+    $("prompt-preview").textContent = workPrompt();
   }
+  function workPrompt() { return Core.buildWorkPrompt(project, location.origin + location.pathname); }
   function updateDynamic() {
     $("sample-banner").hidden = !project.sample;
     document.querySelectorAll("[data-image-direction]").forEach((input) => {
@@ -282,6 +329,7 @@
     document.querySelectorAll(".step").forEach((button) => button.classList.toggle("active", button.dataset.step === step));
     if (step === "preview") { renderPreviews(); renderEdit(); }
     if (step === "work") { renderWorkSelection(); updatePrompt(); }
+    if (step === "library") refreshLibrary();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function sample() {
@@ -382,12 +430,22 @@
     } catch { notify("制作データを読み込めませんでした"); }
     finally { event.target.value = ""; }
   });
-  $("open-work").addEventListener("click", () => openWithPrompt(Core.buildWorkPrompt(project)));
+  $("open-work").addEventListener("click", () => openWithPrompt(workPrompt()));
   $("copy-prompt").addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(Core.buildWorkPrompt(project)); notify("制作指示をコピーしました"); }
+    try { await navigator.clipboard.writeText(workPrompt()); notify("制作指示をコピーしました"); }
     catch { notify("コピーできませんでした。.txt保存をご利用ください"); }
   });
-  $("download-prompt").addEventListener("click", () => download("lp-work-request.txt", Core.buildWorkPrompt(project), "text/plain;charset=utf-8"));
+  $("download-prompt").addEventListener("click", () => download("lp-work-request.txt", workPrompt(), "text/plain;charset=utf-8"));
+  $("refresh-library").addEventListener("click", refreshLibrary);
+  $("add-library-entry").addEventListener("click", () => {
+    const entry = Library.normalizeEntry({ title: $("library-title-input").value, url: $("library-url-input").value, thumbnail: $("library-thumb-input").value, createdAt: new Date().toISOString() }, location.href);
+    if (!entry) return notify("https:// の完成LPリンクを入力してください");
+    library = Library.mergeLists(library, [entry], location.href);
+    saveLibrary(); renderLibrary(); notify("完成LPに追加しました");
+    $("library-title-input").value = ""; $("library-url-input").value = ""; $("library-thumb-input").value = "";
+  });
+  window.addEventListener("focus", () => { if (currentStep === "library") refreshLibrary(); });
 
   renderAll();
+  refreshLibrary();
 })();

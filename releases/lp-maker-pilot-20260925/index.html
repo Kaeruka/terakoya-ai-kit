@@ -25,6 +25,7 @@
       <button class="step" data-step="design"><span>03</span>デザインを選ぶ</button>
       <button class="step" data-step="preview"><span>04</span>3案を比べる</button>
       <button class="step" data-step="work"><span>05</span>Workで仕上げる</button>
+      <button class="step" data-step="library"><span>06</span>完成LP</button>
     </nav>
 
     <main class="main-area">
@@ -64,11 +65,17 @@
       <section id="work" class="panel" aria-labelledby="work-title">
         <div class="panel-head"><div><p class="eyebrow">05 / CHATGPT WORK</p><h1 id="work-title">選んだ案をWorkで仕上げる</h1><p class="sub">気になる案だけ選んで制作します。1案だけでも、複数案でも大丈夫です。</p></div></div>
         <fieldset class="work-selection"><legend>完成させる案を選ぶ</legend><div id="work-designs" class="work-designs"></div><p id="work-selection-count" aria-live="polite"></p></fieldset>
-        <div class="work-flow"><div><strong>1</strong><p>完成させる案を選ぶ</p></div><div><strong>2</strong><p>依頼文をWorkへ渡す</p></div><div><strong>3</strong><p>選んだ案を制作</p></div><div><strong>4</strong><p>確認・保存する</p></div></div>
+        <div class="work-flow"><div><strong>1</strong><p>完成させる案を選ぶ</p></div><div><strong>2</strong><p>依頼文をWorkへ渡す</p></div><div><strong>3</strong><p>選んだ案を制作</p></div><div><strong>4</strong><p>完成LPに保存</p></div></div>
         <div class="work-actions"><button id="open-work" class="primary-button">依頼文を入れてChatGPTを開く <span aria-hidden="true">↗</span></button><button id="copy-prompt" class="subtle-button">依頼文をコピー</button><button id="download-prompt" class="subtle-button">.txtで保存</button></div>
         <p class="privacy-note">自動送信はしません。新しいタブで必要ならWorkを選び、入力内容を確認してから送信してください。個人情報や秘密情報を含む場合は渡す前に除いてください。</p>
         <details><summary>制作指示を確認する</summary><pre id="prompt-preview"></pre></details>
         <div class="work-note"><h2>この画面とWork版</h2><p>Workには選んだ案と対応画像だけを一度に依頼します。端末で指定した写真は自動添付されません。同じ写真を使う場合はWorkへ別途添付してください。</p></div>
+      </section>
+      <section id="library" class="panel" aria-labelledby="library-title">
+        <div class="panel-head"><div><p class="eyebrow">06 / LIBRARY</p><h1 id="library-title">完成したLP</h1><p class="sub">Workサイトに保存されたLPをサムネと一緒に表示します。</p></div><button id="refresh-library" class="subtle-button" type="button">一覧を更新</button></div>
+        <p id="library-status" class="library-status" role="status" aria-live="polite"></p>
+        <div id="library-grid" class="library-grid"></div>
+        <details class="library-register"><summary>リンクを追加する</summary><div class="library-register-fields"><label>LPの名前<input id="library-title-input" type="text" maxlength="120" placeholder="例：商品写真講座のLP"></label><label>完成LPのリンク<input id="library-url-input" type="url" placeholder="https://..."></label><label>サムネ画像のリンク（任意）<input id="library-thumb-input" type="url" placeholder="https://..."></label><button id="add-library-entry" class="primary-button" type="button">一覧に追加</button></div></details>
       </section>
     </main>
   </div>
@@ -78,6 +85,7 @@
   <input id="sheet-file" type="file" accept="text/plain,.txt" hidden>
   <script src="core.js"></script>
   <script src="sheet.js"></script>
+  <script src="library.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

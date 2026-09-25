@@ -6,6 +6,21 @@
   margin-top: 23px;
 }
 
+.library-status { color: #587078; font-size: 13px; min-height: 22px; }
+.library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 18px; }
+.library-card { background: #fff; border: 1px solid #d2e0e2; border-radius: 5px; overflow: hidden; }
+.library-image { height: 170px; background: #e7edef; display: grid; place-items: center; color: #52727c; font: 700 18px/1.4 "Yu Mincho", serif; }
+.library-image img { width: 100%; height: 100%; object-fit: cover; }
+.library-image iframe { width: 1024px; height: 680px; border: 0; transform: scale(.25); transform-origin: top left; pointer-events: none; }
+.library-card-body { padding: 16px; }
+.library-card h2 { font-size: 16px; margin: 0 0 5px; overflow-wrap: anywhere; }
+.library-card p { font-size: 12px; color: #61747a; margin: 0 0 12px; }
+.library-card a { display: inline-block; color: #086c7e; font-weight: 700; }
+.library-empty { padding: 42px 20px; color: #61747a; border: 1px dashed #b4ccd0; text-align: center; }
+.library-register-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 8px 0; }
+.library-register-fields button { align-self: end; }
+@media (max-width: 720px) { .library-register-fields { grid-template-columns: 1fr; } }
+
 .bonus-control [hidden] { display: none; }
 
 .header-new { min-height: 38px; white-space: nowrap; }
